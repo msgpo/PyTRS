@@ -1,8 +1,12 @@
 from vrep import VRep
 from vrep.const import *
+from vrep.vrchk import vrchk
 from youbot import YouBot
 from time import sleep
 import numpy as np
+import cv2
+import math
+import atexit
 import matplotlib.pyplot as plt
 
 # Illustrates the V-REP bindings.
@@ -25,6 +29,13 @@ if __name__ == '__main__':
     # This will only work in "continuous remote API server service". 
     # See http://www.v-rep.eu/helpFiles/en/remoteApiServerSide.htm
     vrep.simxStartSimulation(simx_opmode_oneshot_wait)
+
+    def stop_simulation():
+        vrep.simxStopSimulation(simx_opmode_oneshot_wait)
+        vrep.simxFinish(vrep.clientID)
+
+    # Stop the simulation when exciting with for example ctrl-C
+    atexit.register(stop_simulation)
 
     # Retrieve all handles, and stream arm and wheel joints, the robot's pose, the Hokuyo, and the 
     # arm tip pose. The tip corresponds to the point between the two tongs of the gripper (for 
@@ -57,7 +68,7 @@ if __name__ == '__main__':
     
     # Define the preset pickup pose for this demo. 
     pickup_joints = np.deg2rad(np.array([90, 19.6, 113, -41, 0]))
-    
+
     # Parameters for controlling the youBot's wheels: at each iteration, those values will be set 
     # for the wheels.
     forw_back_vel = 0       # Move straight ahead. 
@@ -95,7 +106,8 @@ if __name__ == '__main__':
                                                        simx_opmode_buffer)
 
     # Initialise the state machine. 
-    fsm = 'rotate'
+    #fsm = 'rotate'
+    fsm = 'snapshot'
 
     ## Start the demo. 
     while True:
@@ -144,9 +156,9 @@ if __name__ == '__main__':
         #     drawnow
         # angl = -pi/2
 
-
     #     ## Apply the state machine. 
-    #     if strcmp(fsm, 'rotate'):
+        if fsm == 'rotate':
+            pass
     #         ## First, rotate the robot to go to one table.             
     #         # The rotation velocity depends on the difference between the current angle and the target. 
     #         rotateRightVel = angdiff(angl, youbotEuler(3))
@@ -181,7 +193,7 @@ if __name__ == '__main__':
     # 
     #             fsm = 'snapshot'
     #         prevPosition = youbotPos(1)
-    #     elif strcmp(fsm, 'snapshot'):
+        elif fsm == 'snapshot':
     #         ## Read data from the depth camera (Hokuyo)
     #         # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also requires a lot of 
     #         # bandwidth, and processing a 3D point cloud (for instance, to find one of the boxes or cylinders that 
@@ -240,20 +252,27 @@ if __name__ == '__main__':
     #         # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
     #         #         |
     #         #         handle_rgb_sensor
-    #         res = vrep.simxSetIntegerSignal(id, 'handle_rgb_sensor', 1, vrep.simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
+            res = vrep.simxSetIntegerSignal('handle_rgb_sensor', 1, simx_opmode_oneshot_wait)
+    #         vrchk(res)
     # 
     #         # Then retrieve the last picture the camera took. The image must be in RGB (not gray scale). 
     #         #      ^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^                            ^^^
     #         #      simxGetVisionSensorImage2     h.rgbSensor                       0
     #         # If you were to try to capture multiple images in a row, try other values than 
     #         # vrep.simx_opmode_oneshot_wait. 
-    #         fprintf('Capturing image...\n')
-    #         [res, resolution, image] = vrep.simxGetVisionSensorImage2(id, handles.rgbSensor, 0, vrep.simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
+            print('Capturing image...\n')
+            [resolution, image] = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
+    #         vrchk(res)
     #         fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
     # 
     #         # Finally, show the image. 
+            img = np.array(image, dtype=np.uint8)
+            img.resize([resolution[0], resolution[1], 3])
+            img = img[::-1,:,:]
+
+            cv2.imshow("RGB Image", img)
+            cv2.waitKey(1)
+
     #         if plotData:
     #             subplot(224)
     #             imshow(image)
