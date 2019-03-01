@@ -1,7 +1,8 @@
 from vrep import VRep
 from vrep.const import *
 from robopy.base.transforms import transl, trotz, troty, trotx
-
+from robopy.base.common import tr
+import numpy as np
 
 # Initialize youBot
 
@@ -69,7 +70,7 @@ class YouBot:
         self.map_looker = vrep.simxGetObjectHandle('map')
         self.landmarks = vrep.simxGetObjectHandle('Landmarks')
     
-    def youbot_hokuyo_init(self, vrep: VRep):
+    def hokuyo_init(self, vrep: VRep):
         # Initialize Hokuyo sensor in VREP
         # This def starts the Hokuyo sensor, and it computes the transformations
         # between the Hokuyo frame and the youBot reference frame h.ref.
@@ -116,6 +117,40 @@ class YouBot:
             self.hokuyo1_euler[1]) * trotz(self.hokuyo1_euler[2])
         self.hokuyo2_trans = transl(self.hokuyo2_pos) * trotx(self.hokuyo2_euler[0]) * troty(
             self.hokuyo2_euler[1]) * trotz(self.hokuyo2_euler[2])
+
+    def hokuyo_read(self, vrep, opmode, trans=None):
+        # Reads from Hokuyo sensor.
+       
+        t1 = self.hokuyo1_trans
+        t2 = self.hokuyo2_trans
+        if trans is not None:
+            t1 = trans * self.hokuyo1_trans
+            t2 = trans * self.hokuyo2_trans
+    
+        # The Hokuyo data comes in a funny format. Use the code below to move it
+        # to a Matlab matrix
+        det, aux_data = vrep.simxReadVisionSensor(self.hokuyo1, opmode)
+        pts1 = np.reshape(aux_data[1][2:], (-1, 4))
+        
+        # Each column of pts1 has [xyzdistancetosensor]
+        # The Hokuyo sensor has a range of 5m. If there are no obstacles, a point
+        # is returned at the 5m limit. As we do not want these points, we throw
+        # away all points that are 5m far from the sensor.
+        obst1 = pts1[:, 4] < 4.9999
+        pts1 = pts1[:, :3]
+
+        # Process the other 120 degrees      
+        det, aux_data = vrep.simxReadVisionSensor(self.hokuyo2, opmode)
+        pts2 = np.reshape(aux_data[1][2:], (-1, 4))
+        obst2 = pts2[:, 4] < 4.9999
+        pts2 = pts2[:, :3]
+        
+        raise NotImplemented()  # TODO
+        # 
+        # scanned_points = [homtrans(t1, pts1) homtrans(t2, pts2)]
+        # contacts = [obst1 obst2]
+        # 
+        # return scanned_points, contacts
     
     def examples(self, vrep):
         ## Examples: getting information from the simulator (and testing the connection). Stream 

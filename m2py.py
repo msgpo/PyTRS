@@ -3,7 +3,7 @@ import re
 
 # Preprocesses a matlab file in order to rewrite it as python
 
-in_fpath = "rvctools/common/ishomog.m"
+in_fpath = "youbot/youbot_hokuyo.m"
 out_fpath = in_fpath.replace(".m", ".py")        
 if os.path.exists(out_fpath):
     input("Warning: file exists. Press any key to overwrite.")

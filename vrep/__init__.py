@@ -217,7 +217,13 @@ class VRep:
             raise Exception("Connection to VREP failed with error status %d" % self.clientID)
 
     ## API functions
-    # simxFinish and simxReleaseBuffer are the only two functions that do not returns a status value
+    # Note that for a few functions, the prototype does not match exactly that of the same 
+    # function in other languages. Check 
+    # http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm
+    # for python-specific documentation.
+    
+    # The functions defined at the top here are the only few functions that do not returns a status 
+    # value and therefore require no validation of that status.
     @staticmethod
     def simxFinish(clientID):
         '''
@@ -226,12 +232,21 @@ class VRep:
     
         c_Finish(clientID)
 
+    @staticmethod
     def simxReleaseBuffer(buffer):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
     
         c_ReleaseBuffer(buffer)
+
+
+    def simxGetConnectionId(self):
+        '''
+        Please have a look at the function description/documentation in the V-REP user manual
+        '''
+    
+        return c_GetConnectionId(self.clientID)
     
     # All other functions of the API return the status value, this value is extracted from the 
     # output and checked with vrchk.
@@ -281,7 +296,8 @@ class VRep:
         return c_SetJointTargetVelocity(self.clientID, jointHandle, targetVelocity, operationMode)
 
     @validate_output
-    def simxSetJointTargetPosition(self, jointHandle, targetPosition, operationMode):
+    def simxSetJointTargetPosition(self, jointHandle, targetPosition, 
+                                   operationMode=simx_opmode_oneshot):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -1441,14 +1457,6 @@ class VRep:
         '''
         info = ct.c_int()
         return c_GetOutMessageInfo(self.clientID, infoType, ct.byref(info)), info.value
-
-    @validate_output
-    def simxGetConnectionId(self):
-        '''
-        Please have a look at the function description/documentation in the V-REP user manual
-        '''
-    
-        return c_GetConnectionId(self.clientID)
 
     @validate_output
     def simxCreateBuffer(bufferSize):
