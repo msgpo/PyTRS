@@ -118,11 +118,6 @@ if __name__ == '__main__':
         youbot_pos = vrep.simxGetObjectPosition(youbot.ref, -1, simx_opmode_buffer)
         youbot_euler = vrep.simxGetObjectOrientation(youbot.ref, -1, simx_opmode_buffer)
 
-        # TODO: uncomment and rewrite the matlab code under these lines in python
-        # Gracefully shut down
-        vrep.simxStopSimulation(simx_opmode_oneshot_wait)
-        vrep.simxFinish(vrep.clientID)
-
         # ## Plot something if required. 
         # if plot_data:
         #     # Read data from the depth sensor, more often called the Hokuyo (if you want to be more
@@ -247,25 +242,26 @@ if __name__ == '__main__':
     #         # and processing an image will take a long time in MATLAB. In general, you will only want to capture 
     #         # an image at specific times, for instance when you believe you're facing one of the tables or a basket.
     # 
-    #         # Ask the sensor to turn itself on, take A SINGLE IMAGE, and turn itself off again. 
-    #         # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    #         # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
-    #         #         |
-    #         #         handle_rgb_sensor
+            # Ask the sensor to turn itself on, take A SINGLE IMAGE, and turn itself off again. 
+            # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
+            #         |
+            #         handle_rgb_sensor
             res = vrep.simxSetIntegerSignal('handle_rgb_sensor', 1, simx_opmode_oneshot_wait)
-    #         vrchk(res)
-    # 
-    #         # Then retrieve the last picture the camera took. The image must be in RGB (not gray scale). 
-    #         #      ^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^                            ^^^
-    #         #      simxGetVisionSensorImage2     h.rgbSensor                       0
-    #         # If you were to try to capture multiple images in a row, try other values than 
-    #         # vrep.simx_opmode_oneshot_wait. 
+
+            #Then retrieve the last picture the camera took. The image must be in RGB 
+            # (not grayscale). 
+            #     ^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^                            ^^^
+            #     simxGetVisionSensorImage2     h.rgbSensor                       0
+            # If you were to try to capture multiple images in a row, try other values than 
+            # simx_opmode_oneshot_wait. 
             print('Capturing image...\n')
-            [resolution, image] = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
-    #         vrchk(res)
-    #         fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
-    # 
-    #         # Finally, show the image. 
+            resolution, image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, 
+                                                              simx_opmode_oneshot_wait)
+    
+            # fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
+
+            # Finally, show the image. 
             img = np.array(image, dtype=np.uint8)
             img.resize([resolution[0], resolution[1], 3])
             img = img[::-1,:,:]

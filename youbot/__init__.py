@@ -1,7 +1,6 @@
 from vrep import VRep
 from vrep.const import *
 from robopy.base.transforms import transl, trotz, troty, trotx
-from robopy.base.common import tr
 import numpy as np
 
 # Initialize youBot
