@@ -3,6 +3,7 @@ from vrep.const import *
 from youbot import YouBot
 from time import sleep
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Illustrates the V-REP bindings.
 
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     # more details, see later or in the file focused/youbot_arm.m). 
     youbot = YouBot(vrep)
     youbot.examples(vrep)
-    youbot.youbot_hokuyo_init(vrep)
+    youbot.hokuyo_init(vrep)
     
     # Let a few cycles pass to make sure there's a value waiting for us next time we try to get a 
     # joint angle or the robot pose with the simx_opmode_buffer option.
@@ -54,103 +55,96 @@ if __name__ == '__main__':
     ## Preset values for the demo. 
     print('Starting robot')
     
+    # Define the preset pickup pose for this demo. 
+    pickup_joints = np.deg2rad(np.array([90, 19.6, 113, -41, 0]))
     
-    # TODO: uncomment and rewrite the matlab code under these lines in python
-    # Gracefully shut down
-    vrep.simxStopSimulation(simx_opmode_oneshot_wait)
-    vrep.simxFinish(vrep.clientID)
-    
-    # # Define the preset pickup pose for this demo. 
-    # pickupJoints = [90 * pi / 180, 19.6 * pi / 180, 113 * pi / 180, - 41 * pi / 180, 0]
-    # 
-    # # Parameters for controlling the youBot's wheels: at each iteration, those values will be set for the wheels. 
-    # # They are adapted at each iteration by the code. 
-    # forwBackVel = 0 # Move straight ahead. 
-    # rightVel = 0 # Go sideways. 
-    # rotateRightVel = 0 # Rotate. 
-    # prevOrientation = 0 # Previous angle to goal (easy way to have a condition on the robot's angular speed). 
-    # prevPosition = 0 # Previous distance to goal (easy way to have a condition on the robot's speed). 
-    # 
-    # # Set the arm to its starting configuration. 
-    # res = vrep.simxPauseCommunication(link_id, True) # Send order to the simulator through vrep object. 
-    # vrchk(vrep, res) # Check the return value from the previous V-REP call (res) and exit in case of error.
-    # 
-    # for i in range(5):
-    #     res = vrep.simxSetJointTargetPosition(link_id, handles.armJoints(i), startingJoints(i), vrep.simx_opmode_oneshot)
-    #     vrchk(vrep, res, True)
-    # 
-    # res = vrep.simxPauseCommunication(link_id, False) 
-    # vrchk(vrep, res)
-    # 
-    # # Initialise the plot. 
-    # plotData = True
-    # if plotData:
-    #     # Prepare the plot area to receive three plots: what the Hokuyo sees at the top (2D map), the point cloud and 
-    #     # the image of what is in front of the robot at the bottom. 
-    #     subplot(211)
-    #     drawnow
-    # 
-    #     # Create a 2D mesh of points, stored in the vectors X and Y. This will be used to display the area the robot can
-    #     # see, by selecting the points within this mesh that are within the visibility range. 
-    #     [X, Y] = meshgrid(-5:.25:5, -5.5:.25:2.5) # Values selected for the area the robot will explore for this demo. 
-    #     X = reshape(X, 1, []) # Make a vector of the matrix X. 
-    #     Y = reshape(Y, 1, [])
-    # 
-    # # Make sure everything is settled before we start. 
-    # pause(2)
-    # 
-    # # Retrieve the position of the gripper. 
-    # [res, homeGripperPosition] = vrep.simxGetObjectPosition(link_id, handles.ptip, handles.armRef, vrep.simx_opmode_buffer)
-    # vrchk(vrep, res, True)
-    # 
-    # # Initialise the state machine. 
-    # fsm = 'rotate'
-    # 
-    # ## Start the demo. 
-    # while True:
-    #     tic # See end of loop to see why it's useful. 
-    # 
-    #     if vrep.simxGetConnectionId(link_id) == -1:
-    #         error('Lost connection to remote API.')
-    # 
-    #     # Get the position and the orientation of the robot. 
-    #     [res, youbotPos] = vrep.simxGetObjectPosition(link_id, handles.ref, -1, vrep.simx_opmode_buffer)
-    #     vrchk(vrep, res, True)
-    #     [res, youbotEuler] = vrep.simxGetObjectOrientation(link_id, handles.ref, -1, vrep.simx_opmode_buffer)
-    #     vrchk(vrep, res, True)
-    # 
-    #     ## Plot something if required. 
-    #     if plotData:
-    #         # Read data from the depth sensor, more often called the Hokuyo (if you want to be more precise about 
-    #         # the way you control the sensor, see later for the details about this line or the file 
-    #         # focused/youbot_3dpointcloud.m).
-    #         # Thisdef returns the set of points the Hokuyo saw in pts. contacts indicates, for each point, if it
-    #         # corresponds to an obstacle (the ray the Hokuyo sent was interrupted by an obstacle, and was not allowed to
-    #         # go to infinity without being stopped). 
-    #         [pts, contacts] = youbot_hokuyo(vrep, handles, vrep.simx_opmode_buffer)
-    # 
-    #         # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it returns the area that
-    #         # is visible, but the visualisation draws a series of points that are within this visible area). 
-    #         in = inpolygon(X, Y, ...
-    #                        [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], ...
-    #                        [handles.hokuyo1Pos(2), pts(2,:), handles.hokuyo2Pos(2)])
-    # 
-    #         # Plot those points. Green dots: the visible area for the Hokuyo. Red starts: the obstacles. Red lines: the
-    #         # visibility range from the Hokuyo sensor. 
-    #         # The youBot is indicated with two dots: the blue one corresponds to the rear, the red one to the Hokuyo
-    #         # sensor position. 
-    #         subplot(211)
-    #         plot(X(in), Y(in), '.g',...
-    #              pts(1, contacts), pts(2, contacts), '*r', ...
-    #              [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], [handles.hokuyo1Pos(2), pts(2, :), handles.hokuyo2Pos(2)], 'r', ...
-    #              0, 0, 'ob',...
-    #         handles.hokuyo1Pos(1), handles.hokuyo1Pos(2), 'or', ...
-    #         handles.hokuyo2Pos(1), handles.hokuyo2Pos(2), 'or')
-    #         axis([-5.5, 5.5, -5.5, 2.5])
-    #         axis equal
-    #         drawnow
-    #     angl = -pi/2
-    # 
+    # Parameters for controlling the youBot's wheels: at each iteration, those values will be set 
+    # for the wheels.
+    forw_back_vel = 0       # Move straight ahead. 
+    right_vel = 0           # Go sideways. 
+    rotate_right_vel = 0    # Rotate. 
+    prev_orientation = 0    # Previous angle to goal (easy way to have a condition on the robot's 
+                            # angular speed). 
+    prev_position = 0       # Previous distance to goal (easy way to have a condition on the 
+                            # robot's speed). 
+
+    # Set the arm to its starting configuration. 
+    vrep.simxPauseCommunication(True) 
+    for arm_joint, starting_joint in zip(youbot.arm_joints, starting_joints):
+        vrep.simxSetJointTargetPosition(arm_joint, starting_joint)
+    vrep.simxPauseCommunication(False) 
+
+    # Initialise the plot. 
+    plot_data = True
+    if plot_data:
+        # Prepare the plot area to receive three plots: what the Hokuyo sees at the top (2D map), 
+        # the point cloud and the image of what is in front of the robot at the bottom. 
+        plt.subplot(211)
+
+        # Create a 2D mesh of points, stored in the vectors X and Y. This will be used to display 
+        # the area the robot can see, by selecting the points within this mesh that are within 
+        # the visibility range.
+        x, y = np.meshgrid(np.arange(-5, 5, .25), np.arange(-5, 5, .25))
+        x, y = x.reshape(-1), y.reshape(-1)
+
+    # Make sure everything is settled before we start. 
+    sleep(2)
+
+    # Retrieve the position of the gripper. 
+    home_gripper_position = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, 
+                                                       simx_opmode_buffer)
+
+    # Initialise the state machine. 
+    fsm = 'rotate'
+
+    ## Start the demo. 
+    while True:
+        if vrep.simxGetConnectionId() == -1:
+            raise Exception('Lost connection to remote API.')
+
+        # Get the position and the orientation of the robot. 
+        youbot_pos = vrep.simxGetObjectPosition(youbot.ref, -1, simx_opmode_buffer)
+        youbot_euler = vrep.simxGetObjectOrientation(youbot.ref, -1, simx_opmode_buffer)
+
+        # TODO: uncomment and rewrite the matlab code under these lines in python
+        # Gracefully shut down
+        vrep.simxStopSimulation(simx_opmode_oneshot_wait)
+        vrep.simxFinish(vrep.clientID)
+
+        # ## Plot something if required. 
+        # if plot_data:
+        #     # Read data from the depth sensor, more often called the Hokuyo (if you want to be more
+        #     # precise about the way you control the sensor, see later for the details about this 
+        #     # line or the file focused/youbot_3dpointcloud.m).
+        #     # This def returns the set of points the Hokuyo saw in pts. contacts indicates, 
+        #     # for each point, if it corresponds to an obstacle (the ray the Hokuyo sent was 
+        #     # interrupted by an obstacle, and was not allowed to go to infinity without being 
+        #     # stopped). 
+        #     pts, contacts = youbot.hokuyo_read(vrep, simx_opmode_buffer)
+        # 
+        #     # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it returns the area that
+        #     # is visible, but the visualisation draws a series of points that are within this visible area). 
+        #     in = inpolygon(X, Y, ...
+        #                    [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], ...
+        #                    [handles.hokuyo1Pos(2), pts(2,:), handles.hokuyo2Pos(2)])
+        # 
+        #     # Plot those points. Green dots: the visible area for the Hokuyo. Red starts: the obstacles. Red lines: the
+        #     # visibility range from the Hokuyo sensor. 
+        #     # The youBot is indicated with two dots: the blue one corresponds to the rear, the red one to the Hokuyo
+        #     # sensor position. 
+        #     subplot(211)
+        #     plot(X(in), Y(in), '.g',...
+        #          pts(1, contacts), pts(2, contacts), '*r', ...
+        #          [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], [handles.hokuyo1Pos(2), pts(2, :), handles.hokuyo2Pos(2)], 'r', ...
+        #          0, 0, 'ob',...
+        #     handles.hokuyo1Pos(1), handles.hokuyo1Pos(2), 'or', ...
+        #     handles.hokuyo2Pos(1), handles.hokuyo2Pos(2), 'or')
+        #     axis([-5.5, 5.5, -5.5, 2.5])
+        #     axis equal
+        #     drawnow
+        # angl = -pi/2
+
+
     #     ## Apply the state machine. 
     #     if strcmp(fsm, 'rotate'):
     #         ## First, rotate the robot to go to one table.             
