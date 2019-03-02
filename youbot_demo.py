@@ -3,7 +3,6 @@ from vrep.const import *
 from youbot import YouBot
 from time import sleep
 import numpy as np
-import cv2
 import atexit
 import matplotlib.pyplot as plt
 from time import perf_counter as timer
@@ -88,8 +87,11 @@ if __name__ == '__main__':
     if plot_data:
         # Prepare the plot area to receive three plots: what the Hokuyo sees at the top (2D map), 
         # the point cloud and the image of what is in front of the robot at the bottom.
-        plt.ion()
-        sensor_ax = plt.subplot(211)  # type: plt.Axes
+        plt.ion()   # Enable interactive mode
+        sensor_ax = plt.subplot(211)    # type: plt.Axes
+        camera_ax = plt.subplot(224)    # type: plt.Axes
+        canvas = plt.gcf().canvas
+        plt.draw()
 
     # Make sure everything is settled before we start. (is this necessary?)
     # sleep(2)
@@ -99,8 +101,8 @@ if __name__ == '__main__':
                                                        simx_opmode_buffer)
 
     # Initialise the state machine. 
-    fsm = 'rotate'
-    # fsm = 'snapshot'
+    # fsm = 'rotate'
+    fsm = 'snapshot'
 
     ## Start the demo. 
     while True:
@@ -112,6 +114,7 @@ if __name__ == '__main__':
         # Get the position and the orientation of the robot. 
         youbot_pos = vrep.simxGetObjectPosition(youbot.ref, -1, simx_opmode_buffer)
         youbot_euler = vrep.simxGetObjectOrientation(youbot.ref, -1, simx_opmode_buffer)
+        angle = -np.pi / 2
 
         ## Plot something if required. 
         if plot_data:
@@ -155,7 +158,7 @@ if __name__ == '__main__':
             sensor_ax.set_xlim(-5.5, 5.5)
             sensor_ax.set_ylim(-5.5, 2.5)
             sensor_ax.set_aspect('equal')
-        angle = -np.pi / 2
+            canvas.flush_events()
 
         ## Apply the state machine. 
         if fsm == 'rotate':
@@ -255,31 +258,24 @@ if __name__ == '__main__':
             #         handle_rgb_sensor
             res = vrep.simxSetIntegerSignal('handle_rgb_sensor', 1, simx_opmode_oneshot_wait)
 
-            #Then retrieve the last picture the camera took. The image must be in RGB 
+            # Then retrieve the last picture the camera took. The image must be in RGB 
             # (not grayscale). 
             #     ^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^                            ^^^
             #     simxGetVisionSensorImage2     h.rgbSensor                       0
             # If you were to try to capture multiple images in a row, try other values than 
             # simx_opmode_oneshot_wait. 
-            print('Capturing image...\n')
+            # print('Capturing image...\n')
             resolution, image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, 
                                                               simx_opmode_oneshot_wait)
     
             # fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
 
             # Finally, show the image. 
-            img = np.array(image, dtype=np.uint8)
-            img.resize([resolution[0], resolution[1], 3])
-            img = img[::-1,:,:]
+            if plot_data:
+                image = np.array(image, dtype=np.uint8).reshape((*resolution, 3))
+                image = image[::-1, :, :]
+                camera_ax.imshow(image)
 
-            cv2.imshow("RGB Image", img)
-            cv2.waitKey(1)
-
-    #         if plotData:
-    #             subplot(224)
-    #             imshow(image)
-    #             drawnow
-    # 
     #         # Next state. 
     #         fsm = 'extend'
     #     elif strcmp(fsm, 'extend'):
@@ -355,11 +351,10 @@ if __name__ == '__main__':
     #     handles = youbot_drive(vrep, handles, forwBackVel, rightVel, rotateRightVel)
     # 
         # Make sure that we do not go faster than the physics simulation (each iteration must take 
-        # roughly 50 ms). 
+        # roughly 50 ms).
         elapsed = timer() - start_time
         timeleft = timestep - elapsed
+        print(timeleft)
         if timeleft > 0:
-            plt.pause(min(timeleft, .01))
-            # sleep(min(timeleft, .01))
-
-
+            # Note: use plt.pause when running an interactive plot, otherwise time.sleep() is fine.
+            plt.pause(min(timeleft, .01))   
