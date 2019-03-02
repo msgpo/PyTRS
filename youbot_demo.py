@@ -34,7 +34,7 @@ if __name__ == '__main__':
         vrep.simxStopSimulation(simx_opmode_oneshot_wait)
         vrep.simxFinish(vrep.clientID)
 
-    # Stop the simulation when exciting with for example ctrl-C
+    # Stop the simulation whenever exiting (e.g. ctrl-C)
     atexit.register(stop_simulation)
 
     # Retrieve all handles, and stream arm and wheel joints, the robot's pose, the Hokuyo, and the 
@@ -118,17 +118,17 @@ if __name__ == '__main__':
         youbot_pos = vrep.simxGetObjectPosition(youbot.ref, -1, simx_opmode_buffer)
         youbot_euler = vrep.simxGetObjectOrientation(youbot.ref, -1, simx_opmode_buffer)
 
-        # ## Plot something if required. 
-        # if plot_data:
-        #     # Read data from the depth sensor, more often called the Hokuyo (if you want to be more
-        #     # precise about the way you control the sensor, see later for the details about this 
-        #     # line or the file focused/youbot_3dpointcloud.m).
-        #     # This def returns the set of points the Hokuyo saw in pts. contacts indicates, 
-        #     # for each point, if it corresponds to an obstacle (the ray the Hokuyo sent was 
-        #     # interrupted by an obstacle, and was not allowed to go to infinity without being 
-        #     # stopped). 
-        #     pts, contacts = youbot.hokuyo_read(vrep, simx_opmode_buffer)
-        # 
+        ## Plot something if required. 
+        if plot_data:
+            # Read data from the depth sensor, more often called the Hokuyo (if you want to be more
+            # precise about the way you control the sensor, see later for the details about this 
+            # line or the file focused/youbot_3dpointcloud.m).
+            # This def returns the set of points the Hokuyo saw in pts. contacts indicates, 
+            # for each point, if it corresponds to an obstacle (the ray the Hokuyo sent was 
+            # interrupted by an obstacle, and was not allowed to go to infinity without being 
+            # stopped). 
+            pts, contacts = youbot.hokuyo_read(vrep, simx_opmode_buffer)
+
         #     # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it returns the area that
         #     # is visible, but the visualisation draws a series of points that are within this visible area). 
         #     in = inpolygon(X, Y, ...
