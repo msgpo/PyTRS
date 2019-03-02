@@ -5,6 +5,7 @@ from time import sleep
 import numpy as np
 import atexit
 import matplotlib.pyplot as plt
+from matplotlib.path import Path as PolygonPath
 from time import perf_counter as timer
 
 # Illustrates the V-REP bindings.
@@ -133,25 +134,25 @@ if __name__ == '__main__':
             # the visibility range.
             x, y = np.meshgrid(np.arange(-5, 5, .25), np.arange(-5, 5, .25))
             x, y = x.reshape(-1), y.reshape(-1)
-            
+
             # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it 
             # returns the area that is visible, but the visualisation draws a series of points 
             # that are within this visible area). 
-            # TODO
-            # in = inpolygon(X, Y, ...
-            #                [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], ...
-            #                [handles.hokuyo1Pos(2), pts(2,:), handles.hokuyo2Pos(2)])
-            
+            path = PolygonPath(list(zip(
+                [youbot.hokuyo1_pos[0], *pts[0, :], youbot.hokuyo2_pos[0]],
+                [youbot.hokuyo1_pos[1], *pts[1, :], youbot.hokuyo2_pos[1]]
+            )))
+            inside = path.contains_points(list(zip(x, y)))
 
             # Plot those points. Green dots: the visible area for the Hokuyo. Red starts: the 
             # obstacles. Red lines: the visibility range from the Hokuyo sensor. The youBot is 
             # indicated with two dots: the blue one corresponds to the rear, the red one to the 
             # Hokuyo sensor position. 
             sensor_ax.clear()
-            sensor_ax.plot(x, y, '.g')
-            sensor_ax.plot(pts[0, contacts], pts[1, contacts], '*r')
+            sensor_ax.plot(x[inside], y[inside], '.g')
             sensor_ax.plot([youbot.hokuyo1_pos[0], *pts[0, :], youbot.hokuyo2_pos[0]],
                            [youbot.hokuyo1_pos[1], *pts[1, :], youbot.hokuyo2_pos[1]], 'r')
+            sensor_ax.plot(pts[0, contacts], pts[1, contacts], '*m')
             sensor_ax.plot(0, 0, 'ob')
             sensor_ax.plot(*youbot.hokuyo1_pos[:2], 'or')
             sensor_ax.plot(*youbot.hokuyo2_pos[:2], 'or')
@@ -256,7 +257,7 @@ if __name__ == '__main__':
             # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
             #         |
             #         handle_rgb_sensor
-            res = vrep.simxSetIntegerSignal('handle_rgb_sensor', 1, simx_opmode_oneshot_wait)
+            vrep.simxSetIntegerSignal('handle_rgb_sensor', 1, simx_opmode_oneshot_wait)
 
             # Then retrieve the last picture the camera took. The image must be in RGB 
             # (not grayscale). 
@@ -264,19 +265,20 @@ if __name__ == '__main__':
             #     simxGetVisionSensorImage2     h.rgbSensor                       0
             # If you were to try to capture multiple images in a row, try other values than 
             # simx_opmode_oneshot_wait. 
-            # print('Capturing image...\n')
+            print('Capturing image...')
             image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
-    
-            # fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
+            print("Captured %dx%dx%dx image." % image.shape)
 
-            # Finally, show the image. 
+            #Finally, show the image. 
             if plot_data:
                 image = image[::-1, :, :]
                 camera_ax.imshow(image)
+                canvas.flush_events()
 
-    #         # Next state. 
-    #         fsm = 'extend'
-    #     elif strcmp(fsm, 'extend'):
+            # Next state. 
+            fsm = 'extend'
+        elif fsm == 'extend':
+            pass
     #         ## Move the arm to face the object.
     #         # Get the arm position. 
     #         [res, tpos] = vrep.simxGetObjectPosition(id, handles.ptip, handles.armRef, vrep.simx_opmode_buffer)
@@ -352,7 +354,6 @@ if __name__ == '__main__':
         # roughly 50 ms).
         elapsed = timer() - start_time
         timeleft = timestep - elapsed
-        print(timeleft)
         if timeleft > 0:
             # Note: use plt.pause when running an interactive plot, otherwise time.sleep() is fine.
             plt.pause(min(timeleft, .01))   
