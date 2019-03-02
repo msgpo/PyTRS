@@ -109,10 +109,10 @@ class YouBot:
         
         # Compute the transformations between the two Hokuyo subsensors and the youBot
         # ref frame h.ref
-        self.hokuyo1_trans = transl(self.hokuyo1_pos) * trotx(self.hokuyo1_euler[0]) * troty(
-            self.hokuyo1_euler[1]) * trotz(self.hokuyo1_euler[2])
-        self.hokuyo2_trans = transl(self.hokuyo2_pos) * trotx(self.hokuyo2_euler[0]) * troty(
-            self.hokuyo2_euler[1]) * trotz(self.hokuyo2_euler[2])
+        self.hokuyo1_trans = np.asarray(transl(self.hokuyo1_pos) * trotx(self.hokuyo1_euler[0]) * \
+                             troty(self.hokuyo1_euler[1]) * trotz(self.hokuyo1_euler[2]))
+        self.hokuyo2_trans = np.asarray(transl(self.hokuyo2_pos) * trotx(self.hokuyo2_euler[0]) * \
+                             troty(self.hokuyo2_euler[1]) * trotz(self.hokuyo2_euler[2]))
 
     def hokuyo_read(self, vrep, opmode, trans=None):
         # Reads from Hokuyo sensor.
@@ -141,8 +141,8 @@ class YouBot:
         obst2 = pts2[3, :] < 4.9999
         pts2 = pts2[:3, :]
 
-        scanned_points = [homtrans(t1, pts1), homtrans(t2, pts2)]
-        contacts = [obst1, obst2]
+        scanned_points = np.hstack((homtrans(t1, pts1), homtrans(t2, pts2)))
+        contacts = np.hstack((obst1, obst2))
 
         return scanned_points, contacts
     
