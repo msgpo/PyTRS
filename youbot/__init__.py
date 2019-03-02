@@ -145,7 +145,72 @@ class YouBot:
         contacts = np.hstack((obst1, obst2))
 
         return scanned_points, contacts
+
+    def drive(self, vrep, forw_back_vel, left_right_vel, rot_vel):
+        # Sets the youBot wheel speed to achieve the given forward, lateral
+        # and rotational velocities. The velocities are normalized to say
+        # within the bounds of the actuator capabilities.
     
+        ## Physical limits of the youBot.
+        p_param = 20
+        max_v = 12
+        p_param_rot = 10
+        max_v_rot = 4
+        accel_f = 0.05
+    
+        ## Compute the velocities.
+        forw_back_vel *= p_param
+        left_right_vel *= p_param
+    
+        # Ensure the velocities are within the acceptable physical range.
+        v = np.sqrt(forw_back_vel ** 2 + left_right_vel ** 2)
+        if v > max_v:
+            forw_back_vel = forw_back_vel * max_v / v
+            left_right_vel = left_right_vel * max_v / v
+    
+        rot_vel *= p_param_rot
+        if abs(rot_vel) > max_v_rot:
+            rot_vel = max_v_rot * rot_vel / abs(rot_vel)
+    
+        ## Compute the accelerations for each velocity.
+        df = forw_back_vel - self.previous_forw_back_vel
+        ds = left_right_vel - self.previous_left_right_vel
+        dr = rot_vel - self.previous_rot_vel
+    
+        # Ensure the accelerations are within the acceptable physical range.
+        if abs(df) > max_v * accel_f:
+            df = np.sign(df) * max_v * accel_f
+    
+        if abs(ds) > max_v * accel_f:
+            ds = np.sign(ds) * max_v * accel_f
+    
+        if abs(dr) > max_v_rot * accel_f:
+            dr = np.sign(dr) * max_v_rot * accel_f
+    
+        ## Update the robot velocities.
+        # Compute the new velocities based on the acceleration.
+        forw_back_vel = self.previous_forw_back_vel + df
+        left_right_vel = self.previous_left_right_vel + ds
+        rot_vel = self.previous_rot_vel + dr
+    
+        # Store the new velocities as the previous ones.
+        self.previous_forw_back_vel = forw_back_vel
+        self.previous_left_right_vel = left_right_vel
+        self.previous_rot_vel = rot_vel
+    
+        # Communicate the new wheel velocities to the simulator.
+        vrep.simxPauseCommunication(True)
+        vrep.simxSetJointTargetVelocity(self.wheel_joints[0], -forw_back_vel - left_right_vel + 
+                                        rot_vel, simx_opmode_oneshot)
+        vrep.simxSetJointTargetVelocity(self.wheel_joints[1], -forw_back_vel + left_right_vel + 
+                                        rot_vel, simx_opmode_oneshot)
+        vrep.simxSetJointTargetVelocity(self.wheel_joints[2], -forw_back_vel - left_right_vel - 
+                                        rot_vel, simx_opmode_oneshot)
+        vrep.simxSetJointTargetVelocity(self.wheel_joints[3], -forw_back_vel + left_right_vel - 
+                                        rot_vel, simx_opmode_oneshot)
+        vrep.simxPauseCommunication(False)
+
+
     def examples(self, vrep):
         ## Examples: getting information from the simulator (and testing the connection). Stream 
         # wheel angles, Hokuyo data, and robot pose (see usage below). Wheel angles are not used 

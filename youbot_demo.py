@@ -161,7 +161,7 @@ if __name__ == '__main__':
             sensor_ax.set_ylim(-5.5, 2.5)
             sensor_ax.set_aspect('equal')
             canvas.flush_events()
-        print(fsm)
+        
         ## Apply the state machine. 
         if fsm == 'rotate':
             ## First, rotate the robot to go to one table.             
@@ -349,10 +349,10 @@ if __name__ == '__main__':
     #         break
     #     else:
     #         error('Unknown state #s.', fsm)
-    # 
-    #     # Update wheel velocities using the global values (whatever the state is). 
-    #     handles = youbot_drive(vrep, handles, forwBackVel, rightVel, rotateRightVel)
-    # 
+
+        # Update wheel velocities using the global values (whatever the state is). 
+        youbot.drive(vrep, forw_back_vel, right_vel, rotate_right_vel)
+
         # Make sure that we do not go faster than the physics simulation (each iteration must take 
         # roughly 50 ms).
         elapsed = timer() - start_time

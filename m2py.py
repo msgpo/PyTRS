@@ -4,17 +4,16 @@ import clipboard
 
 # Preprocesses matlab code in order to rewrite it as python
 
-use_clipboard = True
+in_fpath = "youbot/youbot_drive.m"
+use_clipboard = False   # If true, ignores the filepath and takes input from the clipboard instead
 
 if use_clipboard:
     source = clipboard.paste().replace("\r\n", "\n").split("\n")
 else:
-    in_fpath = "youbot/youbot_hokuyo.m"
     out_fpath = in_fpath.replace(".m", ".py")        
     if os.path.exists(out_fpath):
         input("Warning: file exists. Press any key to overwrite.")
-    source = [line for line in open(in_fpath, "r")]
-
+    source = [line.rstrip() for line in open(in_fpath, "r")]
 
 def group_sub(group, repl):
     """
