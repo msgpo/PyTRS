@@ -69,3 +69,19 @@ def homtrans(T: np.ndarray, p: np.ndarray) -> np.ndarray:
         raise Exception('matrices and point data do not conform')
         
     return pt
+
+
+# Technically this is from "common" rather than "transforms"... I'll see later if this becomes a 
+# problem
+
+# ANGDIFF Difference of two angles
+#
+# D = ANGDIFF(TH1, TH2) returns the difference between angles TH1 and TH2 on
+# the circle.  The result is in the interval [-pi pi).  If TH1 is a column 
+# vector, and TH2 a scalar then return a column vector where TH2 is modulo 
+# subtracted from the corresponding elements of TH1.
+#
+# D = ANGDIFF(TH) returns the equivalent angle to TH in the interval [-pi pi).
+
+def angdiff(th1, th2):
+    return (th1 - th2) + np.pi % (2 * np.pi) - np.pi

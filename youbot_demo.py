@@ -7,6 +7,7 @@ import atexit
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as PolygonPath
 from time import perf_counter as timer
+from youbot.transforms import angdiff
 
 # Illustrates the V-REP bindings.
 
@@ -17,6 +18,7 @@ from time import perf_counter as timer
 
 # Open house.ttt in vrep
 # Run simRemoteApi.start(19998) in the vrep LUA console
+# Run this script
 
 if __name__ == '__main__':
     ## Initiate the connection to the simulator. 
@@ -102,8 +104,7 @@ if __name__ == '__main__':
                                                        simx_opmode_buffer)
 
     # Initialise the state machine. 
-    # fsm = 'rotate'
-    fsm = 'snapshot'
+    fsm = 'rotate'
 
     ## Start the demo. 
     while True:
@@ -160,22 +161,24 @@ if __name__ == '__main__':
             sensor_ax.set_ylim(-5.5, 2.5)
             sensor_ax.set_aspect('equal')
             canvas.flush_events()
-
+        print(fsm)
         ## Apply the state machine. 
         if fsm == 'rotate':
+            ## First, rotate the robot to go to one table.             
+            # The rotation velocity depends on the difference between the current angle and the 
+            # target. 
+            rotate_right_vel = angdiff(angle, youbot_euler[2])
+
+            # When the rotation is done (with a sufficiently high precision), move on to the 
+            # next state. 
+            if (abs(angdiff(angle, youbot_euler[2])) < np.deg2rad(.1)) and \
+                    (abs(angdiff(prev_orientation, youbot_euler[2])) < np.deg2rad(.01)):
+                rotate_right_vel = 0
+                fsm = 'drive'
+
+            prev_orientation = youbot_euler[2]
+        elif fsm == 'drive':
             pass
-    #         ## First, rotate the robot to go to one table.             
-    #         # The rotation velocity depends on the difference between the current angle and the target. 
-    #         rotateRightVel = angdiff(angl, youbotEuler(3))
-    # 
-    #         # When the rotation is done (with a sufficiently high precision), move on to the next state. 
-    #         if (abs(angdiff(angl, youbotEuler(3))) < .1 / 180 * pi) && ...:
-    #                 (abs(angdiff(prevOrientation, youbotEuler(3))) < .01 / 180 * pi)
-    #             rotateRightVel = 0
-    #             fsm = 'drive'
-    # 
-    #         prevOrientation = youbotEuler(3)
-    #     elif strcmp(fsm, 'drive'):
     #         ## Then, make it move straight ahead until it reaches the table (x = 3.167 m). 
     #         # The further the robot, the faster it drives. (Only check for the first dimension.)
     #         # For the project, you should not use a predefined value, but rather compute it from your map. 

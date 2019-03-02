@@ -1,12 +1,19 @@
 import os 
 import re
+import clipboard
 
-# Preprocesses a matlab file in order to rewrite it as python
+# Preprocesses matlab code in order to rewrite it as python
 
-in_fpath = "youbot/youbot_hokuyo.m"
-out_fpath = in_fpath.replace(".m", ".py")        
-if os.path.exists(out_fpath):
-    input("Warning: file exists. Press any key to overwrite.")
+use_clipboard = True
+
+if use_clipboard:
+    source = clipboard.paste().replace("\r\n", "\n").split("\n")
+else:
+    in_fpath = "youbot/youbot_hokuyo.m"
+    out_fpath = in_fpath.replace(".m", ".py")        
+    if os.path.exists(out_fpath):
+        input("Warning: file exists. Press any key to overwrite.")
+    source = [line for line in open(in_fpath, "r")]
 
 
 def group_sub(group, repl):
@@ -51,9 +58,17 @@ operations = [
 #     (r'()^\s*def simx', group_sub(1, '    @validate_output\n')),
 # ]
         
-out_file = open(out_fpath, "w")        
-for line in open(in_fpath, "r"):
+output = ""
+for line in source:
     for operation in operations:
-        line = re.sub(*operation, line) 
-    out_file.write(line)
+        line = re.sub(*operation, line)
+    output += "%s\n" % line
+    
+print("Output:\n%s" % output)
+if use_clipboard:
+    clipboard.copy(output)
+else:
+    out_file = open(out_fpath, "w")
+    out_file.write(output)
+    
 
