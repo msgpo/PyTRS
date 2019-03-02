@@ -29,13 +29,12 @@ if __name__ == '__main__':
     # This will only work in "continuous remote API server service". 
     # See http://www.v-rep.eu/helpFiles/en/remoteApiServerSide.htm
     vrep.simxStartSimulation(simx_opmode_oneshot_wait)
-
+    
+    # Stop the simulation whenever exiting (e.g. ctrl-C)
+    @atexit.register
     def stop_simulation():
         vrep.simxStopSimulation(simx_opmode_oneshot_wait)
         vrep.simxFinish(vrep.clientID)
-
-    # Stop the simulation whenever exiting (e.g. ctrl-C)
-    atexit.register(stop_simulation)
 
     # Retrieve all handles, and stream arm and wheel joints, the robot's pose, the Hokuyo, and the 
     # arm tip pose. The tip corresponds to the point between the two tongs of the gripper (for 
@@ -88,26 +87,21 @@ if __name__ == '__main__':
     # Initialise the plot. 
     plot_data = True
     if plot_data:
+        pass
         # Prepare the plot area to receive three plots: what the Hokuyo sees at the top (2D map), 
         # the point cloud and the image of what is in front of the robot at the bottom. 
-        plt.subplot(211)
+        # plt.subplot(211)
 
-        # Create a 2D mesh of points, stored in the vectors X and Y. This will be used to display 
-        # the area the robot can see, by selecting the points within this mesh that are within 
-        # the visibility range.
-        x, y = np.meshgrid(np.arange(-5, 5, .25), np.arange(-5, 5, .25))
-        x, y = x.reshape(-1), y.reshape(-1)
-
-    # Make sure everything is settled before we start. 
-    sleep(2)
+    # Make sure everything is settled before we start. (is this necessary?)
+    # sleep(2)
 
     # Retrieve the position of the gripper. 
     home_gripper_position = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, 
                                                        simx_opmode_buffer)
 
     # Initialise the state machine. 
-    #fsm = 'rotate'
-    fsm = 'snapshot'
+    fsm = 'rotate'
+    # fsm = 'snapshot'
 
     ## Start the demo. 
     while True:
@@ -129,29 +123,41 @@ if __name__ == '__main__':
             # stopped). 
             pts, contacts = youbot.hokuyo_read(vrep, simx_opmode_buffer)
 
-        #     # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it returns the area that
-        #     # is visible, but the visualisation draws a series of points that are within this visible area). 
-        #     in = inpolygon(X, Y, ...
-        #                    [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], ...
-        #                    [handles.hokuyo1Pos(2), pts(2,:), handles.hokuyo2Pos(2)])
-        # 
-        #     # Plot those points. Green dots: the visible area for the Hokuyo. Red starts: the obstacles. Red lines: the
-        #     # visibility range from the Hokuyo sensor. 
-        #     # The youBot is indicated with two dots: the blue one corresponds to the rear, the red one to the Hokuyo
-        #     # sensor position. 
-        #     subplot(211)
-        #     plot(X(in), Y(in), '.g',...
-        #          pts(1, contacts), pts(2, contacts), '*r', ...
-        #          [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], [handles.hokuyo1Pos(2), pts(2, :), handles.hokuyo2Pos(2)], 'r', ...
-        #          0, 0, 'ob',...
-        #     handles.hokuyo1Pos(1), handles.hokuyo1Pos(2), 'or', ...
-        #     handles.hokuyo2Pos(1), handles.hokuyo2Pos(2), 'or')
-        #     axis([-5.5, 5.5, -5.5, 2.5])
-        #     axis equal
-        #     drawnow
-        # angl = -pi/2
+            # Create a 2D mesh of points, stored in the vectors X and Y. This will be used to 
+            # display 
+            # the area the robot can see, by selecting the points within this mesh that are within 
+            # the visibility range.
+            x, y = np.meshgrid(np.arange(-5, 5, .25), np.arange(-5, 5, .25))
+            x, y = x.reshape(-1), y.reshape(-1)
+            
+            # Select the points in the mesh [X, Y] that are visible, as returned by the Hokuyo (it 
+            # returns the area that is visible, but the visualisation draws a series of points 
+            # that are within this visible area). 
+            # TODO
+            # in = inpolygon(X, Y, ...
+            #                [handles.hokuyo1Pos(1), pts(1,:), handles.hokuyo2Pos(1)], ...
+            #                [handles.hokuyo1Pos(2), pts(2,:), handles.hokuyo2Pos(2)])
+            
 
-    #     ## Apply the state machine. 
+            # Plot those points. Green dots: the visible area for the Hokuyo. Red starts: the 
+            # obstacles. Red lines: the visibility range from the Hokuyo sensor. The youBot is 
+            # indicated with two dots: the blue one corresponds to the rear, the red one to the 
+            # Hokuyo sensor position. 
+            ax = plt.subplot(211) # type: plt.Axes
+            ax.plot(x, y, '.g')
+            ax.plot(pts[0, contacts], pts[1, contacts], '*r')
+            ax.plot([youbot.hokuyo1_pos[0], *pts[0, :], youbot.hokuyo2_pos[0]],
+                    [youbot.hokuyo1_pos[1], *pts[1, :], youbot.hokuyo2_pos[1]], 'r')
+            ax.plot(0, 0, 'ob')
+            ax.plot(*youbot.hokuyo1_pos[:2], 'or')
+            ax.plot(*youbot.hokuyo2_pos[:2], 'or')
+            ax.set_xlim(-5.5, 5.5)
+            ax.set_ylim(-5.5, 2.5)
+            ax.set_aspect('equal')
+            plt.show()
+        angle = -np.pi / 2
+
+        ## Apply the state machine. 
         if fsm == 'rotate':
             pass
     #         ## First, rotate the robot to go to one table.             
