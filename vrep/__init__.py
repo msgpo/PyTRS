@@ -6,6 +6,7 @@ import ctypes as ct
 from vrep.const import *
 from vrep.vrchk import vrchk
 from functools import wraps
+import numpy as np
 
 #load library
 libsimx = None
@@ -408,15 +409,16 @@ class VRep:
         ret = c_GetVisionSensorImage(self.clientID, sensorHandle, resolution, ct.byref(c_image),
                                      options, operationMode)
     
-        reso = []
-        image = []
-        if (ret == 0):
-            image = [None] * resolution[0] * resolution[1] * bytesPerPixel
-            for i in range(resolution[0] * resolution[1] * bytesPerPixel):
-                image[i] = c_image[i]
-            for i in range(2):
-                reso.append(resolution[i])
-        return ret, reso, image
+        # Modified to return a numpy array read directly from memory with the correct shape and 
+        # data type (uint8). No longer returns the resolution (use image.shape). Measured elapsed
+        # time for a 512x512x3 image from 60ms to 3ms with this version.  
+        image = None
+
+        if ret == 0:
+            image = np.ctypeslib.as_array(c_image, (resolution[0], resolution[1], bytesPerPixel))
+            image = image.astype(np.uint8)
+
+        return ret, image
 
     @validate_output
     def simxSetVisionSensorImage(self, sensorHandle, image, options, operationMode):

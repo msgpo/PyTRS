@@ -265,14 +265,12 @@ if __name__ == '__main__':
             # If you were to try to capture multiple images in a row, try other values than 
             # simx_opmode_oneshot_wait. 
             # print('Capturing image...\n')
-            resolution, image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, 
-                                                              simx_opmode_oneshot_wait)
+            image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
     
             # fprintf('Captured #i pixels (#i x #i).\n', resolution(1) * resolution(2), resolution(1), resolution(2))
 
             # Finally, show the image. 
             if plot_data:
-                image = np.array(image, dtype=np.uint8).reshape((*resolution, 3))
                 image = image[::-1, :, :]
                 camera_ax.imshow(image)
 
