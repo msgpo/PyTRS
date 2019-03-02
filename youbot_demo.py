@@ -1,13 +1,12 @@
 from vrep import VRep
 from vrep.const import *
-from vrep.vrchk import vrchk
 from youbot import YouBot
 from time import sleep
 import numpy as np
 import cv2
-import math
 import atexit
 import matplotlib.pyplot as plt
+from time import perf_counter as timer
 
 # Illustrates the V-REP bindings.
 
@@ -87,10 +86,10 @@ if __name__ == '__main__':
     # Initialise the plot. 
     plot_data = True
     if plot_data:
-        pass
         # Prepare the plot area to receive three plots: what the Hokuyo sees at the top (2D map), 
-        # the point cloud and the image of what is in front of the robot at the bottom. 
-        # plt.subplot(211)
+        # the point cloud and the image of what is in front of the robot at the bottom.
+        plt.ion()
+        sensor_ax = plt.subplot(211)  # type: plt.Axes
 
     # Make sure everything is settled before we start. (is this necessary?)
     # sleep(2)
@@ -105,6 +104,8 @@ if __name__ == '__main__':
 
     ## Start the demo. 
     while True:
+        start_time = timer()
+        
         if vrep.simxGetConnectionId() == -1:
             raise Exception('Lost connection to remote API.')
 
@@ -143,18 +144,17 @@ if __name__ == '__main__':
             # obstacles. Red lines: the visibility range from the Hokuyo sensor. The youBot is 
             # indicated with two dots: the blue one corresponds to the rear, the red one to the 
             # Hokuyo sensor position. 
-            ax = plt.subplot(211) # type: plt.Axes
-            ax.plot(x, y, '.g')
-            ax.plot(pts[0, contacts], pts[1, contacts], '*r')
-            ax.plot([youbot.hokuyo1_pos[0], *pts[0, :], youbot.hokuyo2_pos[0]],
-                    [youbot.hokuyo1_pos[1], *pts[1, :], youbot.hokuyo2_pos[1]], 'r')
-            ax.plot(0, 0, 'ob')
-            ax.plot(*youbot.hokuyo1_pos[:2], 'or')
-            ax.plot(*youbot.hokuyo2_pos[:2], 'or')
-            ax.set_xlim(-5.5, 5.5)
-            ax.set_ylim(-5.5, 2.5)
-            ax.set_aspect('equal')
-            plt.show()
+            sensor_ax.clear()
+            sensor_ax.plot(x, y, '.g')
+            sensor_ax.plot(pts[0, contacts], pts[1, contacts], '*r')
+            sensor_ax.plot([youbot.hokuyo1_pos[0], *pts[0, :], youbot.hokuyo2_pos[0]],
+                           [youbot.hokuyo1_pos[1], *pts[1, :], youbot.hokuyo2_pos[1]], 'r')
+            sensor_ax.plot(0, 0, 'ob')
+            sensor_ax.plot(*youbot.hokuyo1_pos[:2], 'or')
+            sensor_ax.plot(*youbot.hokuyo2_pos[:2], 'or')
+            sensor_ax.set_xlim(-5.5, 5.5)
+            sensor_ax.set_ylim(-5.5, 2.5)
+            sensor_ax.set_aspect('equal')
         angle = -np.pi / 2
 
         ## Apply the state machine. 
@@ -354,10 +354,12 @@ if __name__ == '__main__':
     #     # Update wheel velocities using the global values (whatever the state is). 
     #     handles = youbot_drive(vrep, handles, forwBackVel, rightVel, rotateRightVel)
     # 
-    #     # Make sure that we do not go faster than the physics simulation (each iteration must take roughly 50 ms). 
-    #     elapsed = toc
-    #     timeleft = timestep - elapsed
-    #     if timeleft > 0:
-    #         pause(min(timeleft, .01))
-    # 
-    # 
+        # Make sure that we do not go faster than the physics simulation (each iteration must take 
+        # roughly 50 ms). 
+        elapsed = timer() - start_time
+        timeleft = timestep - elapsed
+        if timeleft > 0:
+            plt.pause(min(timeleft, .01))
+            # sleep(min(timeleft, .01))
+
+
