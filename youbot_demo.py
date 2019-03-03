@@ -178,29 +178,27 @@ if __name__ == '__main__':
 
             prev_orientation = youbot_euler[2]
         elif fsm == 'drive':
-            pass
-    #         ## Then, make it move straight ahead until it reaches the table (x = 3.167 m). 
-    #         # The further the robot, the faster it drives. (Only check for the first dimension.)
-    #         # For the project, you should not use a predefined value, but rather compute it from your map. 
-    #         forwBackVel = - (youbotPos(1) + 3.167)
-    # 
-    #         # If the robot is sufficiently close and its speed is sufficiently low, stop it and move its arm to 
-    #         # a specific location before moving on to the next state.
-    #         if (youbotPos(1) + 3.167 < .001) && (abs(youbotPos(1) - prevPosition) < .001):
-    #             forwBackVel = 0
-    # 
-    #             # Change the orientation of the camera to focus on the table (preparation for next state). 
-    #             vrep.simxSetObjectOrientation(link_id, handles.rgbdCasing, handles.ref, [0, 0, pi / 4], vrep.simx_opmode_oneshot)
-    # 
-    #             # Move the arm to the preset pose pickupJoints (only useful for this demo you should compute it based
-    #             # on the object to grasp). 
-    #             for i in range(5):
-    #                 res = vrep.simxSetJointTargetPosition(link_id, handles.armJoints(i), pickupJoints(i), ...
-    #                                                       vrep.simx_opmode_oneshot)
+            ## Then, make it move straight ahead until it reaches the table (x = 3.167 m).
+            # The further the robot, the faster it drives. (Only check for the first dimension.)
+            # For the project, you should not use a predefined value, but rather compute it from your map.
+            forw_back_vel = - (youbot_pos[0] + 3.167)
+
+            # If the robot is sufficiently close and its speed is sufficiently low, stop it and move its arm to
+            # a specific location before moving on to the next state.
+            if (youbot_pos[0] + 3.167 < .001) and (abs(youbot_pos[0] - prev_position) < .001):
+                forwBackVel = 0
+
+                # Change the orientation of the camera to focus on the table (preparation for next state).
+                vrep.simxSetObjectOrientation(youbot.rgbd_casing, youbot.ref, [0, 0, np.pi / 4], simx_opmode_oneshot)
+
+                # Move the arm to the preset pose pickupJoints (only useful for this demo you should compute it based
+                # on the object to grasp).
+                for i in range(4):
+                    res = vrep.simxSetJointTargetPosition(youbot.arm_joints[i], pickup_joints[i], simx_opmode_oneshot)
     #                 vrchk(vrep, res, True)
-    # 
-    #             fsm = 'snapshot'
-    #         prevPosition = youbotPos(1)
+
+                fsm = 'snapshot'
+            prev_position = youbot_pos[0]
         elif fsm == 'snapshot':
     #         ## Read data from the depth camera (Hokuyo)
     #         # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also requires a lot of 
@@ -352,7 +350,6 @@ if __name__ == '__main__':
 
         # Update wheel velocities using the global values (whatever the state is). 
         youbot.drive(vrep, forw_back_vel, right_vel, rotate_right_vel)
-
         # Make sure that we do not go faster than the physics simulation (each iteration must take 
         # roughly 50 ms).
         elapsed = timer() - start_time
