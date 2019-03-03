@@ -84,4 +84,4 @@ def homtrans(T: np.ndarray, p: np.ndarray) -> np.ndarray:
 # D = ANGDIFF(TH) returns the equivalent angle to TH in the interval [-pi pi).
 
 def angdiff(th1, th2):
-    return (th1 - th2) + np.pi % (2 * np.pi) - np.pi
+    return ((th1 - th2) + np.pi) % (2 * np.pi) - np.pi
