@@ -100,8 +100,7 @@ if __name__ == '__main__':
     # sleep(2)
 
     # Retrieve the position of the gripper. 
-    home_gripper_position = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, 
-                                                       simx_opmode_buffer)
+    home_gripper_position = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer))
 
     # Initialise the state machine. 
     fsm = 'rotate'
@@ -284,8 +283,7 @@ if __name__ == '__main__':
         elif fsm == 'extend':
             ## Move the arm to face the object.
             # Get the arm position.
-            tpos = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer)
-            tpos = np.asarray(tpos)
+            tpos = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer))
             # If the arm has reached the wanted position, move on to the next state.
             # Once again, your code should compute this based on the object to grasp.
             if np.linalg.norm(tpos - np.asarray([0.3259, -0.0010, 0.2951])) < .002:
@@ -327,25 +325,27 @@ if __name__ == '__main__':
             fsm = 'backoff'
             print("Entering 'Backoff' State")
         elif fsm == 'backoff':
-            pass
             ## Go back to rest position.
-    #         # Set each joint to their original angle, as given by startingJoints. Please note that this operation is not
-    #         # instantaneous, it takes a few iterations of the code for the arm to reach the requested pose. 
-    #         for i in range(5):
-    #             res = vrep.simxSetJointTargetPosition(id, handles.armJoints(i), startingJoints(i), vrep.simx_opmode_oneshot)
+            # Set each joint to their original angle, as given by startingJoints. Please note that this operation is not
+            # instantaneous, it takes a few iterations of the code for the arm to reach the requested pose.
+            for i in range(5):
+                res = vrep.simxSetJointTargetPosition(youbot.arm_joints[i], starting_joints[i], simx_opmode_oneshot)
     #             vrchk(vrep, res, True)
-    # 
-    #         # Get the gripper position and check whether it is at destination (the original position).
-    #         [res, tpos] = vrep.simxGetObjectPosition(id, handles.ptip, handles.armRef, vrep.simx_opmode_buffer)
+
+            # Get the gripper position and check whether it is at destination (the original position).
+            tpos = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer))
     #         vrchk(vrep, res, True)
-    #         if norm(tpos - homeGripperPosition) < .02:
-    #             # Open the gripper when the arm is above its base. 
-    #             res = vrep.simxSetIntegerSignal(id, 'gripper_open', 1, vrep.simx_opmode_oneshot_wait)
+            if np.linalg.norm(tpos - home_gripper_position) < .02:
+                # Open the gripper when the arm is above its base.
+                res = vrep.simxSetIntegerSignal('gripper_open', 1, simx_opmode_oneshot_wait)
     #             vrchk(vrep, res)
-    # 
-    #         if norm(tpos - homeGripperPosition) < .002:
-    #             fsm = 'finished'
-    #     elif strcmp(fsm, 'finished'):
+
+            if np.linalg.norm(tpos - home_gripper_position) < .002:
+                fsm = 'finished'
+                print("Entering 'Finished' State")
+
+        elif fsm == 'finished':
+            pass
     #         ## Demo done: exit the function. 
     #         pause(3)
     #         break
