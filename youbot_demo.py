@@ -125,7 +125,7 @@ if __name__ == '__main__':
             # Read data from the depth sensor, more often called the Hokuyo (if you want to be more
             # precise about the way you control the sensor, see later for the details about this 
             # line or the file focused/youbot_3dpointcloud.m).
-            # This def returns the set of points the Hokuyo saw in pts. contacts indicates, 
+            # This function returns the set of points the Hokuyo saw in pts. contacts indicates, 
             # for each point, if it corresponds to an obstacle (the ray the Hokuyo sent was 
             # interrupted by an obstacle, and was not allowed to go to infinity without being 
             # stopped). 
@@ -279,8 +279,7 @@ if __name__ == '__main__':
 
             # Finally, show the image. 
             if plot_data:
-                image = image[::-1, :, :]
-                camera_ax.imshow(image)
+                camera_ax.imshow(image, origin='lower')
                 canvas.flush_events()
 
             # Next state. 

@@ -72,7 +72,7 @@ class YouBot:
     
     def hokuyo_init(self, vrep: VRep):
         # Initialize Hokuyo sensor in VREP
-        # This def starts the Hokuyo sensor, and it computes the transformations
+        # This function starts the Hokuyo sensor, and it computes the transformations
         # between the Hokuyo frame and the youBot reference frame h.ref.
         # These transformations are stored in h.hokuyo1Trans and h.hokuyo2Trans
         
