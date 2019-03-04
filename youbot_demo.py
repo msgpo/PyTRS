@@ -100,7 +100,8 @@ if __name__ == '__main__':
     # sleep(2)
 
     # Retrieve the position of the gripper. 
-    home_gripper_position = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer))
+    home_gripper_position = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, 
+                                                                  simx_opmode_buffer))
 
     # Initialise the state machine. 
     fsm = 'rotate'
@@ -180,79 +181,83 @@ if __name__ == '__main__':
         elif fsm == 'drive':
             ## Then, make it move straight ahead until it reaches the table (x = 3.167 m).
             # The further the robot, the faster it drives. (Only check for the first dimension.)
-            # For the project, you should not use a predefined value, but rather compute it from your map.
+            # For the project, you should not use a predefined value, but rather compute it from 
+            # your map.
             forw_back_vel = - (youbot_pos[0] + 3.167)
 
-            # If the robot is sufficiently close and its speed is sufficiently low, stop it and move its arm to
-            # a specific location before moving on to the next state.
+            # If the robot is sufficiently close and its speed is sufficiently low, stop it and 
+            # move its arm to a specific location before moving on to the next state.
             if (youbot_pos[0] + 3.167 < .001) and (abs(youbot_pos[0] - prev_position) < .001):
-                forwBackVel = 0
+                forw_back_vel = 0
 
-                # Change the orientation of the camera to focus on the table (preparation for next state).
-                vrep.simxSetObjectOrientation(youbot.rgbd_casing, youbot.ref, [0, 0, np.pi / 4], simx_opmode_oneshot)
+                # Change the orientation of the camera to focus on the table (preparation for 
+                # the next state).
+                vrep.simxSetObjectOrientation(youbot.rgbd_casing, youbot.ref, [0, 0, np.pi / 4], 
+                                              simx_opmode_oneshot)
 
-                # Move the arm to the preset pose pickupJoints (only useful for this demo you should compute it based
-                # on the object to grasp).
-                for i in range(5):
-                    res = vrep.simxSetJointTargetPosition(youbot.arm_joints[i], pickup_joints[i], simx_opmode_oneshot)
-    #                 vrchk(vrep, res, True)
+                # Move the arm to the preset pose pickupJoints (only useful for this demo you 
+                # should compute it based on the object to grasp).
+                for arm_joint, pickup_joint in zip(youbot.arm_joints, pickup_joints):
+                    vrep.simxSetJointTargetPosition(arm_joint, pickup_joint, simx_opmode_oneshot)
 
                 fsm = 'snapshot'
             prev_position = youbot_pos[0]
         elif fsm == 'snapshot':
             ## Read data from the depth camera (Hokuyo)
-            # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also requires a lot of
-            # bandwidth, and processing a 3D point cloud (for instance, to find one of the boxes or cylinders that
-            # the robot has to grasp) will take a long time in MATLAB. In general, you will only want to capture a 3D
-            # image at specific times, for instance when you believe you're facing one of the tables.
+            # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also 
+            # requires a lot of bandwidth, and processing a 3D point cloud (for instance, 
+            # to find one of the boxes or cylinders that the robot has to grasp) will take a long
+            # time in MATLAB. In general, you will only want to capture a 3D image at specific 
+            # times, for instance when you believe you're facing one of the tables.
 
             # Reduce the view angle to pi/8 in order to better see the objects. Do it only once.
             # ^^^^^^     ^^^^^^^^^^    ^^^^                                     ^^^^^^^^^^^^^^^
             # simxSetFloatSignal                                                simx_opmode_oneshot_wait
             #            |
             #            rgbd_sensor_scan_angle
-            # The depth camera has a limited number of rays that gather information. If this number is concentrated
-            # on a smaller angle, the resolution is better. pi/8 has been determined by experimentation.
-    #         res = vrep.simxSetFloatSignal(id, 'rgbd_sensor_scan_angle', pi / 8, vrep.simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
-    # 
-    #         # Ask the sensor to turn itself on, take A SINGLE POINT CLOUD, and turn itself off again. 
-    #         # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    #         # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
-    #         #         |
-    #         #         handle_xyz_sensor
-    #         res = vrep.simxSetIntegerSignal(id, 'handle_xyz_sensor', 1, vrep.simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
-    # 
-    #         # Then retrieve the last point cloud the depth sensor took.
-    #         # If you were to try to capture multiple images in a row, try other values than 
-    #         # vrep.simx_opmode_oneshot_wait. 
-    #         fprintf('Capturing a point cloud...\n')
-    #         pts = youbot_xyz_sensor(vrep, handles, vrep.simx_opmode_oneshot_wait)
-    #         # Each column of pts has [xyzdistancetosensor]. However, plot3 does not have the same frame of reference as 
-    #         # the output data. To get a correct plot, you should invert the y and z dimensions. 
-    # 
-    #         # Here, we only keep points within 1 meter, to focus on the table. 
-    #         pts = pts(1:3, pts(4, :) < 1)
-    # 
-    #         if plotData:
-    #             subplot(223)
-    #             plot3(pts(1, :), pts(3, :), pts(2, :), '*')
-    #             axis equal
-    #             view([-169 -46])
-    # 
-    #         # Save the point cloud to pc.xyz. (This file can be displayed with http://www.meshlab.net/.)
-    #         fileID = fopen('pc.xyz','w')
-    #         fprintf(fileID,'#f #f #f\n', pts)
-    #         fclose(fileID)
-    #         fprintf('Read #i 3D points, saved to pc.xyz.\n', max(size(pts)))
-    # 
-    #         ## Read data from the RGB camera
-    #         # This starts the robot's camera to take a 2D picture of what the robot can see. 
-    #         # Reading an image costs a lot to VREP (it has to simulate the image). It also requires a lot of bandwidth, 
-    #         # and processing an image will take a long time in MATLAB. In general, you will only want to capture 
-    #         # an image at specific times, for instance when you believe you're facing one of the tables or a basket.
-    # 
+            # The depth camera has a limited number of rays that gather information. If this number 
+            # is concentrated on a smaller angle, the resolution is better. pi/8 has been 
+            # determined by experimentation.
+            # res = vrep.simxSetFloatSignal(id, 'rgbd_sensor_scan_angle', pi / 8, vrep.simx_opmode_oneshot_wait)
+            # vrchk(vrep, res)
+            # 
+            # # Ask the sensor to turn itself on, take A SINGLE POINT CLOUD, and turn itself off again. 
+            # # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
+            # #         |
+            # #         handle_xyz_sensor
+            # res = vrep.simxSetIntegerSignal(id, 'handle_xyz_sensor', 1, vrep.simx_opmode_oneshot_wait)
+            # vrchk(vrep, res)
+            # 
+            # # Then retrieve the last point cloud the depth sensor took.
+            # # If you were to try to capture multiple images in a row, try other values than 
+            # # vrep.simx_opmode_oneshot_wait. 
+            # fprintf('Capturing a point cloud...\n')
+            # pts = youbot_xyz_sensor(vrep, handles, vrep.simx_opmode_oneshot_wait)
+            # # Each column of pts has [xyzdistancetosensor]. However, plot3 does not have the same frame of reference as 
+            # # the output data. To get a correct plot, you should invert the y and z dimensions. 
+            # 
+            # # Here, we only keep points within 1 meter, to focus on the table. 
+            # pts = pts(1:3, pts(4, :) < 1)
+            # 
+            # if plotData:
+            #     subplot(223)
+            #     plot3(pts(1, :), pts(3, :), pts(2, :), '*')
+            #     axis equal
+            #     view([-169 -46])
+            # 
+            # # Save the point cloud to pc.xyz. (This file can be displayed with http://www.meshlab.net/.)
+            # fileID = fopen('pc.xyz','w')
+            # fprintf(fileID,'#f #f #f\n', pts)
+            # fclose(fileID)
+            # fprintf('Read #i 3D points, saved to pc.xyz.\n', max(size(pts)))
+            # 
+            # ## Read data from the RGB camera
+            # # This starts the robot's camera to take a 2D picture of what the robot can see. 
+            # # Reading an image costs a lot to VREP (it has to simulate the image). It also requires a lot of bandwidth, 
+            # # and processing an image will take a long time in MATLAB. In general, you will only want to capture 
+            # # an image at specific times, for instance when you believe you're facing one of the tables or a basket.
+
             # Ask the sensor to turn itself on, take A SINGLE IMAGE, and turn itself off again. 
             # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
@@ -288,57 +293,54 @@ if __name__ == '__main__':
             # Once again, your code should compute this based on the object to grasp.
             if np.linalg.norm(tpos - np.asarray([0.3259, -0.0010, 0.2951])) < .002:
                 # Set the inverse kinematics (IK) mode to position AND orientation.
-                res = vrep.simxSetIntegerSignal('km_mode', 2, simx_opmode_oneshot_wait)
-    #             vrchk(vrep, res, True)
+                vrep.simxSetIntegerSignal('km_mode', 2, simx_opmode_oneshot_wait)
                 fsm = 'reachout'
                 print("Entering 'Reachout' State")
         elif fsm == 'reachout':
             ## Move the gripper tip along a line so that it faces the object with the right angle.
-            # Get the arm tip position. The arm is driven only by the position of the tip, not by the angles of
-            # the joints, except if IK is disabled.
+            # Get the arm tip position. The arm is driven only by the position of the tip, not by 
+            # the angles of the joints, except if IK is disabled.
             # Following the line ensures the arm attacks the object with the right angle.
             tpos = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer)
 
-            # If the tip is at the right position, go on to the next state. Again, this value should be computed based
-            # on the object to grasp and on the robot's position.
+            # If the tip is at the right position, go on to the next state. Again, this value 
+            # should be computed based on the object to grasp and on the robot's position.
             if tpos[0] > .39:
                 fsm = 'grasp'
                 print("Entering 'Grasp' State")
 
             # Move the tip to the next position along the line.
             tpos[0] = tpos[0] + .01
-            res = vrep.simxSetObjectPosition(youbot.ptarget, youbot.arm_ref, tpos, simx_opmode_oneshot)
-    #         vrchk(vrep, res, True)
+            vrep.simxSetObjectPosition(youbot.ptarget, youbot.arm_ref, tpos, simx_opmode_oneshot)
         elif fsm == 'grasp':
             ## Grasp the object by closing the gripper on it.
-            # Close the gripper. Please pay attention that it is not possible to adjust the force to apply:
-            # the object will sometimes slip from the gripper!
-            res = vrep.simxSetIntegerSignal('gripper_open', 0, simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
+            # Close the gripper. Please pay attention that it is not possible to adjust the force 
+            # to apply: the object will sometimes slip from the gripper!
+            vrep.simxSetIntegerSignal('gripper_open', 0, simx_opmode_oneshot_wait)
 
-            # Make the program wait for the gripper to be closed. This value was determined by experiments.
+            # Make the program wait for the gripper to be closed. This value was determined by 
+            # experiments.
             sleep(2)
 
             # Disable IK this is used at the next state to move the joints manually.
-            res = vrep.simxSetIntegerSignal('km_mode', 0, simx_opmode_oneshot_wait)
-    #         vrchk(vrep, res)
+            vrep.simxSetIntegerSignal('km_mode', 0, simx_opmode_oneshot_wait)
             fsm = 'backoff'
             print("Entering 'Backoff' State")
         elif fsm == 'backoff':
             ## Go back to rest position.
-            # Set each joint to their original angle, as given by startingJoints. Please note that this operation is not
-            # instantaneous, it takes a few iterations of the code for the arm to reach the requested pose.
-            for i in range(5):
-                res = vrep.simxSetJointTargetPosition(youbot.arm_joints[i], starting_joints[i], simx_opmode_oneshot)
-    #             vrchk(vrep, res, True)
+            # Set each joint to their original angle, as given by startingJoints. Please note that 
+            # this operation is not instantaneous, it takes a few iterations of the code for the 
+            # arm to reach the requested pose.
+            for arm_joint, starting_joint in zip(youbot.arm_joints, starting_joints):
+                vrep.simxSetJointTargetPosition(arm_joint, starting_joint, simx_opmode_oneshot)
 
-            # Get the gripper position and check whether it is at destination (the original position).
-            tpos = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer))
-    #         vrchk(vrep, res, True)
+            # Get the gripper position and check whether it is at destination (the original 
+            # position).
+            tpos = np.asarray(vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, 
+                                                         simx_opmode_buffer))
             if np.linalg.norm(tpos - home_gripper_position) < .02:
                 # Open the gripper when the arm is above its base.
-                res = vrep.simxSetIntegerSignal('gripper_open', 1, simx_opmode_oneshot_wait)
-    #             vrchk(vrep, res)
+                vrep.simxSetIntegerSignal('gripper_open', 1, simx_opmode_oneshot_wait)
 
             if np.linalg.norm(tpos - home_gripper_position) < .002:
                 fsm = 'finished'
@@ -349,7 +351,7 @@ if __name__ == '__main__':
             sleep(3)
             break
         else:
-            raise Exception(f'Unknown state {fsm}.')
+            raise Exception('Unknown state %s' % fsm)
 
         # Update wheel velocities using the global values (whatever the state is). 
         youbot.drive(vrep, forw_back_vel, right_vel, rotate_right_vel)
