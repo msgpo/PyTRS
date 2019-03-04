@@ -175,6 +175,7 @@ if __name__ == '__main__':
                     (abs(angdiff(prev_orientation, youbot_euler[2])) < np.deg2rad(.01)):
                 rotate_right_vel = 0
                 fsm = 'drive'
+                print("Entering 'Drive' State")
 
             prev_orientation = youbot_euler[2]
         elif fsm == 'drive':
@@ -193,7 +194,7 @@ if __name__ == '__main__':
 
                 # Move the arm to the preset pose pickupJoints (only useful for this demo you should compute it based
                 # on the object to grasp).
-                for i in range(4):
+                for i in range(5):
                     res = vrep.simxSetJointTargetPosition(youbot.arm_joints[i], pickup_joints[i], simx_opmode_oneshot)
     #                 vrchk(vrep, res, True)
 
@@ -278,53 +279,56 @@ if __name__ == '__main__':
 
             # Next state. 
             fsm = 'extend'
+            print("Entering 'Extend' State")
+
         elif fsm == 'extend':
-            pass
-    #         ## Move the arm to face the object.
-    #         # Get the arm position. 
-    #         [res, tpos] = vrep.simxGetObjectPosition(id, handles.ptip, handles.armRef, vrep.simx_opmode_buffer)
-    #         vrchk(vrep, res, True)
-    # 
-    #         # If the arm has reached the wanted position, move on to the next state. 
-    #         # Once again, your code should compute this based on the object to grasp. 
-    #         if norm(tpos - [0.3259, -0.0010, 0.2951]) < .002:
-    #             # Set the inverse kinematics (IK) mode to position AND orientation. 
-    #             res = vrep.simxSetIntegerSignal(id, 'km_mode', 2, vrep.simx_opmode_oneshot_wait)
+            ## Move the arm to face the object.
+            # Get the arm position.
+            tpos = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer)
+            tpos = np.asarray(tpos)
+            # If the arm has reached the wanted position, move on to the next state.
+            # Once again, your code should compute this based on the object to grasp.
+            if np.linalg.norm(tpos - np.asarray([0.3259, -0.0010, 0.2951])) < .002:
+                # Set the inverse kinematics (IK) mode to position AND orientation.
+                res = vrep.simxSetIntegerSignal('km_mode', 2, simx_opmode_oneshot_wait)
     #             vrchk(vrep, res, True)
-    #             fsm = 'reachout'
-    #     elif strcmp(fsm, 'reachout'):
-    #         ## Move the gripper tip along a line so that it faces the object with the right angle.
-    #         # Get the arm tip position. The arm is driven only by the position of the tip, not by the angles of 
-    #         # the joints, except if IK is disabled.
-    #         # Following the line ensures the arm attacks the object with the right angle. 
-    #         [res, tpos] = vrep.simxGetObjectPosition(id, handles.ptip, handles.armRef, vrep.simx_opmode_buffer)
+                fsm = 'reachout'
+                print("Entering 'Reachout' State")
+        elif fsm == 'reachout':
+            ## Move the gripper tip along a line so that it faces the object with the right angle.
+            # Get the arm tip position. The arm is driven only by the position of the tip, not by the angles of
+            # the joints, except if IK is disabled.
+            # Following the line ensures the arm attacks the object with the right angle.
+            tpos = vrep.simxGetObjectPosition(youbot.ptip, youbot.arm_ref, simx_opmode_buffer)
+
+            # If the tip is at the right position, go on to the next state. Again, this value should be computed based
+            # on the object to grasp and on the robot's position.
+            if tpos[0] > .39:
+                fsm = 'grasp'
+                print("Entering 'Grasp' State")
+
+            # Move the tip to the next position along the line.
+            tpos[0] = tpos[0] + .01
+            res = vrep.simxSetObjectPosition(youbot.ptarget, youbot.arm_ref, tpos, simx_opmode_oneshot)
     #         vrchk(vrep, res, True)
-    # 
-    #         # If the tip is at the right position, go on to the next state. Again, this value should be computed based
-    #         # on the object to grasp and on the robot's position. 
-    #         if tpos(1) > .39:
-    #             fsm = 'grasp'
-    # 
-    #         # Move the tip to the next position along the line. 
-    #         tpos(1) = tpos(1) + .01
-    #         res = vrep.simxSetObjectPosition(id, handles.ptarget, handles.armRef, tpos, vrep.simx_opmode_oneshot)
-    #         vrchk(vrep, res, True)
-    #     elif strcmp(fsm, 'grasp'):
-    #         ## Grasp the object by closing the gripper on it.
-    #         # Close the gripper. Please pay attention that it is not possible to adjust the force to apply:  
-    #         # the object will sometimes slip from the gripper!
-    #         res = vrep.simxSetIntegerSignal(id, 'gripper_open', 0, vrep.simx_opmode_oneshot_wait)
+        elif fsm == 'grasp':
+            ## Grasp the object by closing the gripper on it.
+            # Close the gripper. Please pay attention that it is not possible to adjust the force to apply:
+            # the object will sometimes slip from the gripper!
+            res = vrep.simxSetIntegerSignal('gripper_open', 0, simx_opmode_oneshot_wait)
     #         vrchk(vrep, res)
-    # 
-    #         # Make MATLAB wait for the gripper to be closed. This value was determined by experiments. 
-    #         pause(2)
-    # 
-    #         # Disable IK this is used at the next state to move the joints manually. 
-    #         res = vrep.simxSetIntegerSignal(id, 'km_mode', 0, vrep.simx_opmode_oneshot_wait)
+
+            # Make the program wait for the gripper to be closed. This value was determined by experiments.
+            sleep(2)
+
+            # Disable IK this is used at the next state to move the joints manually.
+            res = vrep.simxSetIntegerSignal('km_mode', 0, simx_opmode_oneshot_wait)
     #         vrchk(vrep, res)
-    #         fsm = 'backoff'
-    #     elif strcmp(fsm, 'backoff'):
-    #         ## Go back to rest position.
+            fsm = 'backoff'
+            print("Entering 'Backoff' State")
+        elif fsm == 'backoff':
+            pass
+            ## Go back to rest position.
     #         # Set each joint to their original angle, as given by startingJoints. Please note that this operation is not
     #         # instantaneous, it takes a few iterations of the code for the arm to reach the requested pose. 
     #         for i in range(5):

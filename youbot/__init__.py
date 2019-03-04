@@ -66,7 +66,7 @@ class YouBot:
         # corresponds to one of the three Euler angles of the tip orientation.
         self.r22 = vrep.simxGetObjectHandle('Rectangle22')
         
-        self.arm_joints = [vrep.simxGetObjectHandle('youBotArmJoint%d' % i) for i in range(1, 5)]
+        self.arm_joints = [vrep.simxGetObjectHandle('youBotArmJoint%d' % i) for i in range(0, 5)]
         self.map_looker = vrep.simxGetObjectHandle('map')
         self.landmarks = vrep.simxGetObjectHandle('Landmarks')
     
