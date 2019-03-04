@@ -200,19 +200,19 @@ if __name__ == '__main__':
                 fsm = 'snapshot'
             prev_position = youbot_pos[0]
         elif fsm == 'snapshot':
-    #         ## Read data from the depth camera (Hokuyo)
-    #         # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also requires a lot of 
-    #         # bandwidth, and processing a 3D point cloud (for instance, to find one of the boxes or cylinders that 
-    #         # the robot has to grasp) will take a long time in MATLAB. In general, you will only want to capture a 3D 
-    #         # image at specific times, for instance when you believe you're facing one of the tables.
-    # 
-    #         # Reduce the view angle to pi/8 in order to better see the objects. Do it only once. 
-    #         # ^^^^^^     ^^^^^^^^^^    ^^^^                                     ^^^^^^^^^^^^^^^ 
-    #         # simxSetFloatSignal                                                simx_opmode_oneshot_wait
-    #         #            |
-    #         #            rgbd_sensor_scan_angle
-    #         # The depth camera has a limited number of rays that gather information. If this number is concentrated 
-    #         # on a smaller angle, the resolution is better. pi/8 has been determined by experimentation. 
+            ## Read data from the depth camera (Hokuyo)
+            # Reading a 3D image costs a lot to VREP (it has to simulate the image). It also requires a lot of
+            # bandwidth, and processing a 3D point cloud (for instance, to find one of the boxes or cylinders that
+            # the robot has to grasp) will take a long time in MATLAB. In general, you will only want to capture a 3D
+            # image at specific times, for instance when you believe you're facing one of the tables.
+
+            # Reduce the view angle to pi/8 in order to better see the objects. Do it only once.
+            # ^^^^^^     ^^^^^^^^^^    ^^^^                                     ^^^^^^^^^^^^^^^
+            # simxSetFloatSignal                                                simx_opmode_oneshot_wait
+            #            |
+            #            rgbd_sensor_scan_angle
+            # The depth camera has a limited number of rays that gather information. If this number is concentrated
+            # on a smaller angle, the resolution is better. pi/8 has been determined by experimentation.
     #         res = vrep.simxSetFloatSignal(id, 'rgbd_sensor_scan_angle', pi / 8, vrep.simx_opmode_oneshot_wait)
     #         vrchk(vrep, res)
     # 
@@ -345,12 +345,11 @@ if __name__ == '__main__':
                 print("Entering 'Finished' State")
 
         elif fsm == 'finished':
-            pass
-    #         ## Demo done: exit the function. 
-    #         pause(3)
-    #         break
-    #     else:
-    #         error('Unknown state #s.', fsm)
+            ## Demo done: exit the function.
+            sleep(3)
+            break
+        else:
+            raise Exception(f'Unknown state {fsm}.')
 
         # Update wheel velocities using the global values (whatever the state is). 
         youbot.drive(vrep, forw_back_vel, right_vel, rotate_right_vel)
