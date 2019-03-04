@@ -4,7 +4,7 @@ import clipboard
 
 # Preprocesses matlab code in order to rewrite it as python
 
-in_fpath = "youbot/youbot_drive.m"
+in_fpath = "youbot/youbot_xyz_sensor.m"
 use_clipboard = False   # If true, ignores the filepath and takes input from the clipboard instead
 
 if use_clipboard:
@@ -37,7 +37,7 @@ def group_sub(group, repl):
         return prefix + group_string + suffix
     return wrapper
 
-# Generic matlab code operation
+# Generic matlab code operations
 operations = [
     (r'%', lambda m: m.group(0).replace('%', '#')), # Comment character: % -> #
     (r'^\s*end\s*', ''),            # Removal of end statement for if, else, for 

@@ -6,6 +6,7 @@ import numpy as np
 import atexit
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as PolygonPath
+from mpl_toolkits.mplot3d import Axes3D     # Implicitely needed for 3D projections
 from time import perf_counter as timer
 from youbot.transforms import angdiff
 
@@ -93,6 +94,7 @@ if __name__ == '__main__':
         plt.ion()   # Enable interactive mode
         sensor_ax = plt.subplot(211)    # type: plt.Axes
         camera_ax = plt.subplot(224)    # type: plt.Axes
+        pt_cloud_ax = plt.subplot(223, projection='3d') # type: plt.Axes
         canvas = plt.gcf().canvas
         plt.draw()
 
@@ -218,45 +220,45 @@ if __name__ == '__main__':
             # The depth camera has a limited number of rays that gather information. If this number 
             # is concentrated on a smaller angle, the resolution is better. pi/8 has been 
             # determined by experimentation.
-            # res = vrep.simxSetFloatSignal(id, 'rgbd_sensor_scan_angle', pi / 8, vrep.simx_opmode_oneshot_wait)
-            # vrchk(vrep, res)
-            # 
-            # # Ask the sensor to turn itself on, take A SINGLE POINT CLOUD, and turn itself off again. 
-            # # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            # # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
-            # #         |
-            # #         handle_xyz_sensor
-            # res = vrep.simxSetIntegerSignal(id, 'handle_xyz_sensor', 1, vrep.simx_opmode_oneshot_wait)
-            # vrchk(vrep, res)
-            # 
-            # # Then retrieve the last point cloud the depth sensor took.
-            # # If you were to try to capture multiple images in a row, try other values than 
-            # # vrep.simx_opmode_oneshot_wait. 
-            # fprintf('Capturing a point cloud...\n')
-            # pts = youbot_xyz_sensor(vrep, handles, vrep.simx_opmode_oneshot_wait)
-            # # Each column of pts has [xyzdistancetosensor]. However, plot3 does not have the same frame of reference as 
-            # # the output data. To get a correct plot, you should invert the y and z dimensions. 
-            # 
-            # # Here, we only keep points within 1 meter, to focus on the table. 
-            # pts = pts(1:3, pts(4, :) < 1)
-            # 
-            # if plotData:
-            #     subplot(223)
-            #     plot3(pts(1, :), pts(3, :), pts(2, :), '*')
-            #     axis equal
-            #     view([-169 -46])
-            # 
-            # # Save the point cloud to pc.xyz. (This file can be displayed with http://www.meshlab.net/.)
-            # fileID = fopen('pc.xyz','w')
-            # fprintf(fileID,'#f #f #f\n', pts)
-            # fclose(fileID)
-            # fprintf('Read #i 3D points, saved to pc.xyz.\n', max(size(pts)))
-            # 
-            # ## Read data from the RGB camera
-            # # This starts the robot's camera to take a 2D picture of what the robot can see. 
-            # # Reading an image costs a lot to VREP (it has to simulate the image). It also requires a lot of bandwidth, 
-            # # and processing an image will take a long time in MATLAB. In general, you will only want to capture 
-            # # an image at specific times, for instance when you believe you're facing one of the tables or a basket.
+            vrep.simxSetFloatSignal('rgbd_sensor_scan_angle', np.pi / 8, simx_opmode_oneshot_wait)
+
+            # Ask the sensor to turn itself on, take A SINGLE POINT CLOUD, and turn itself off again. 
+            # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # simxSetIntegerSignal          1        simx_opmode_oneshot_wait
+            #         |
+            #         handle_xyz_sensor
+            vrep.simxSetIntegerSignal('handle_xyz_sensor', 1, simx_opmode_oneshot_wait)
+
+            # Then retrieve the last point cloud the depth sensor took.
+            # If you were to try to capture multiple images in a row, try other values than 
+            # vrep.simx_opmode_oneshot_wait. 
+            print('Capturing a point cloud...')
+            pts = youbot.xyz_read(vrep, simx_opmode_oneshot_wait)
+            # Each column of pts has [xyzdistancetosensor]. However, plot3 does not have the same 
+            # frame of reference as the output data. To get a correct plot, you should invert the
+            # y and z dimensions. 
+
+            # Here, we only keep points within 1 meter, to focus on the table. 
+            pts = pts[:3, pts[3, :] < 1]
+            if plot_data:
+                pt_cloud_ax.scatter(pts[0, :], pts[2, :], pts[1, :], '*')
+                pt_cloud_ax.set_aspect('equal')
+                canvas.flush_events()
+                # view([-169 -46])  -> can't remember what's the plt equivalent for this
+
+            # Save the point cloud to pc.xyz. (This file can be displayed with 
+            # http://www.meshlab.net/.)
+            with open('pc.xyz','w') as f:
+                for pt in pts.T:
+                    f.write("%f %f %f\n" % tuple(pt))
+            print('Read %d 3D points, saved to pc.xyz.' % pts.shape[1])
+
+            ## Read data from the RGB camera
+            # This starts the robot's camera to take a 2D picture of what the robot can see. 
+            # Reading an image costs a lot to VREP (it has to simulate the image). It also requires 
+            # a lot of bandwidth, and processing an image will take a long time in MATLAB. In 
+            # general, you will only want to capture an image at specific times, for instance 
+            # when you believe you're facing one of the tables or a basket.
 
             # Ask the sensor to turn itself on, take A SINGLE IMAGE, and turn itself off again. 
             # ^^^     ^^^^^^                ^^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -275,7 +277,7 @@ if __name__ == '__main__':
             image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
             print("Captured %dx%dx%dx image." % image.shape)
 
-            #Finally, show the image. 
+            # Finally, show the image. 
             if plot_data:
                 image = image[::-1, :, :]
                 camera_ax.imshow(image)

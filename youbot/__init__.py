@@ -125,7 +125,7 @@ class YouBot:
     
         # The Hokuyo data comes in a funny format. Use the code below to move it
         # to a Matlab matrix
-        det, aux_data = vrep.simxReadVisionSensor(self.hokuyo1, opmode)
+        _, aux_data = vrep.simxReadVisionSensor(self.hokuyo1, opmode)
         pts1 = np.reshape(aux_data[1][2:], (-1, 4)).T
         
         # Each column of pts1 has [xyzdistancetosensor]
@@ -136,7 +136,7 @@ class YouBot:
         pts1 = pts1[:3, :]
 
         # Process the other 120 degrees      
-        det, aux_data = vrep.simxReadVisionSensor(self.hokuyo2, opmode)
+        _, aux_data = vrep.simxReadVisionSensor(self.hokuyo2, opmode)
         pts2 = np.reshape(aux_data[1][2:], (-1, 4)).T
         obst2 = pts2[3, :] < 4.9999
         pts2 = pts2[:3, :]
@@ -145,6 +145,15 @@ class YouBot:
         contacts = np.hstack((obst1, obst2))
 
         return scanned_points, contacts
+
+    def xyz_read(self, vrep, opmode):
+        # Read from xyz sensor.
+        det, aux_data = vrep.simxReadVisionSensor(self.xyz_sensor, opmode)
+        pts = np.reshape(aux_data[1][2:], (-1, 4)).T
+        
+        # Each column of pts has [xyzdistancetosensor]
+        pts = pts[:, pts[3, :] < 4.9999]
+        return pts
 
     def drive(self, vrep, forw_back_vel, left_right_vel, rot_vel):
         # Sets the youBot wheel speed to achieve the given forward, lateral
