@@ -36,7 +36,7 @@ PyTRS
 ```
 
 ### Demos
-Aside from `demo_youbot.py`, the other demonstration scripts do something very specific. In order of increasing complexity: 
+Aside from `demo_youbot.py`, the demonstration scripts do something very specific. In order of increasing complexity: 
 
   * `demo_youbot_photo.m`: takes a 2D picture (standard RGB sensor)
   * `demo_youbot_3dpointcloud.m`: takes a 3D point cloud (Hokuyo sensor)
@@ -44,7 +44,7 @@ Aside from `demo_youbot.py`, the other demonstration scripts do something very s
   * `demo_youbot_moving.m`: moves the robot around
   * `demo_youbot_arm.m`: moves the robot's arm
 
-The following scripts also show some tricks about plotting data in MATLAB; they are not linked to the previous scripts: 
+The following scripts also show some tricks about plotting data; they are not linked to the previous scripts: 
 
   * `demo_plot_matrix.py`: plots a matrix (such as a map)
   * `demo_plot_multiple.py`: deals with multiple windows
