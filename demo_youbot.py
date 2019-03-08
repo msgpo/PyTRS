@@ -17,7 +17,6 @@ from youbot.transforms import angdiff
 # (See http://www.gnu.org/copyleft/gpl.html)
 
 
-# Open house.ttt in vrep
 # Run simRemoteApi.start(19998) in the vrep LUA console
 # Run this script
 
@@ -27,6 +26,14 @@ if __name__ == '__main__':
     VRep.simxFinish(-1)
     vrep = VRep('127.0.0.1', 19998, True, True, 2000, 5)
     print('Connection %d to the remote API server open.\n' % vrep.clientID)
+    
+    # Reset the simulation if it was left running
+    # Load the scene if it was not already loaded
+    vrep.simxStopSimulation(simx_opmode_blocking)
+    try:
+        vrep.simxLoadScene("world/house.ttt", True, simx_opmode_blocking)
+    except:
+        pass
 
     # This will only work in "continuous remote API server service". 
     # See http://www.v-rep.eu/helpFiles/en/remoteApiServerSide.htm
@@ -42,7 +49,7 @@ if __name__ == '__main__':
     # arm tip pose. The tip corresponds to the point between the two tongs of the gripper (for 
     # more details, see later or in the file focused/youbot_arm.m). 
     youbot = YouBot(vrep)
-    youbot.examples(vrep)
+    youbot.streaming_init(vrep)
     youbot.hokuyo_init(vrep)
     
     # Let a few cycles pass to make sure there's a value waiting for us next time we try to get a 

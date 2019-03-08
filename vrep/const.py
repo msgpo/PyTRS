@@ -1,3 +1,6 @@
+# Read about these constants here:
+# http://www.coppeliarobotics.com/helpFiles/en/remoteApiConstants.htm
+
 #constants
 #Scene object types. Values are serialized
 sim_object_shape_type           =0

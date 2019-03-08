@@ -69,7 +69,27 @@ class YouBot:
         self.arm_joints = [vrep.simxGetObjectHandle('youBotArmJoint%d' % i) for i in range(0, 5)]
         self.map_looker = vrep.simxGetObjectHandle('map')
         self.landmarks = vrep.simxGetObjectHandle('Landmarks')
+
+    def streaming_init(self, vrep):
+        ## Examples: getting information from the simulator (and testing the connection). Stream 
+        # wheel angles, Hokuyo data, and robot pose (see usage below). Wheel angles are not used 
+        # in this example, but they may be necessary in your project.
+        for wheel_joint in self.wheel_joints:
+            vrep.simxGetJointPosition(wheel_joint)
+        vrep.simxGetObjectPosition(self.ref, -1)
+        vrep.simxGetObjectOrientation(self.ref, -1, simx_opmode_streaming)
+        vrep.simxReadVisionSensor(self.hokuyo1, simx_opmode_streaming)
+        vrep.simxReadVisionSensor(self.hokuyo2, simx_opmode_streaming)
     
+        # Stream the arm joint angles and the tip position/orientation
+        vrep.simxGetObjectPosition(self.ptip, self.arm_ref, simx_opmode_streaming)
+        vrep.simxGetObjectOrientation(self.otip, self.r22, simx_opmode_streaming)
+        for arm_joint in self.arm_joints:
+            vrep.simxGetJointPosition(arm_joint, simx_opmode_streaming)
+    
+        # Make sure that all streaming data has reached the client at least once
+        vrep.simxGetPingTime()
+        
     def hokuyo_init(self, vrep: VRep):
         # Initialize Hokuyo sensor in VREP
         # This function starts the Hokuyo sensor, and it computes the transformations
@@ -218,27 +238,3 @@ class YouBot:
         vrep.simxSetJointTargetVelocity(self.wheel_joints[3], -forw_back_vel + left_right_vel - 
                                         rot_vel, simx_opmode_oneshot)
         vrep.simxPauseCommunication(False)
-
-
-    def examples(self, vrep):
-        ## Examples: getting information from the simulator (and testing the connection). Stream 
-        # wheel angles, Hokuyo data, and robot pose (see usage below). Wheel angles are not used 
-        # in this example, but they may be necessary in your project.
-        
-        for wheel_joint in self.wheel_joints:
-            vrep.simxGetJointPosition(wheel_joint)
-        vrep.simxGetObjectPosition(self.ref, -1)
-        vrep.simxGetObjectOrientation(self.ref, -1, simx_opmode_streaming)
-        vrep.simxReadVisionSensor(self.hokuyo1, simx_opmode_streaming)
-        vrep.simxReadVisionSensor(self.hokuyo2, simx_opmode_streaming)
-        
-        # Stream the arm joint angles and the tip position/orientation
-        vrep.simxGetObjectPosition(self.ptip, self.arm_ref, simx_opmode_streaming)
-        vrep.simxGetObjectOrientation(self.otip, self.r22, simx_opmode_streaming)
-        for arm_joint in self.arm_joints:
-            vrep.simxGetJointPosition(arm_joint, simx_opmode_streaming)
-        
-        # Make sure that all streaming data has reached the client at least once
-        vrep.simxGetPingTime()
-
-
