@@ -11,16 +11,16 @@ import numpy as np
 world_map = np.ones((64, 64), np.bool)  # At first, no cell is accessible.
 world_map[19:40, 19:40] = 0 # Dig a rectangle in it.
 world_map[29, 19:40] = 1    # Draw three walls.
-world_map[24:35, [25, 35]] = 1
+world_map[24:35, [24, 34]] = 1
 
 # With this representation, contour can be used to draw the map.
 plt.subplot(121).set_aspect('equal')
 plt.contour(1 - world_map)  # Invert the booleans to draw the inner contour
 plt.title('Contour')
 
-# We can also draw the map
+# We can also draw the map directly
 plt.subplot(122).set_aspect('equal')
-plt.imshow(world_map, origin='lower')  # Invert the booleans to draw the inner contour
-plt.title('Map')
+plt.imshow(world_map, origin='lower')
+plt.title('Image')
 
 plt.show()

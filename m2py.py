@@ -4,7 +4,7 @@ import clipboard
 
 # Preprocesses matlab code in order to rewrite it as python
 
-in_fpath = "youbot/focused/plot_matrix.m"
+in_fpath = "youbot/focused/plot_multiple.m"
 use_clipboard = False   # If true, ignores the filepath and takes input from the clipboard instead
 
 if use_clipboard:
