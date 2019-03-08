@@ -17,7 +17,6 @@ from youbot.transforms import angdiff
 # (See http://www.gnu.org/copyleft/gpl.html)
 
 
-# Open house.ttt in vrep
 # Run simRemoteApi.start(19998) in the vrep LUA console
 # Run this script
 
@@ -27,6 +26,14 @@ if __name__ == '__main__':
     VRep.simxFinish(-1)
     vrep = VRep('127.0.0.1', 19998, True, True, 2000, 5)
     print('Connection %d to the remote API server open.\n' % vrep.clientID)
+    
+    # Reset the simulation if it was left running
+    # Load the scene if it was not already loaded
+    vrep.simxStopSimulation(simx_opmode_blocking)
+    try:
+        vrep.simxLoadScene("world/house.ttt", True, simx_opmode_blocking)
+    except:
+        pass
 
     # This will only work in "continuous remote API server service". 
     # See http://www.v-rep.eu/helpFiles/en/remoteApiServerSide.htm
