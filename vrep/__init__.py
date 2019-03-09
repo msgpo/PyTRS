@@ -252,7 +252,7 @@ class VRep:
     # All other functions of the API return the status value, this value is extracted from the 
     # output and checked with vrchk.
     @validate_output
-    def simxGetJointPosition(self, jointHandle, operationMode=simx_opmode_streaming):
+    def simxGetJointPosition(self, jointHandle, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -297,8 +297,7 @@ class VRep:
         return c_SetJointTargetVelocity(self.clientID, jointHandle, targetVelocity, operationMode)
 
     @validate_output
-    def simxSetJointTargetPosition(self, jointHandle, targetPosition, 
-                                   operationMode=simx_opmode_oneshot):
+    def simxSetJointTargetPosition(self, jointHandle, targetPosition, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -360,7 +359,7 @@ class VRep:
         return c_BreakForceSensor(self.clientID, forceSensorHandle, operationMode)
 
     @validate_output
-    def simxReadVisionSensor(self, sensorHandle, operationMode=simx_opmode_streaming):
+    def simxReadVisionSensor(self, sensorHandle, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -385,7 +384,7 @@ class VRep:
         return ret, bool(detectionState.value != 0), auxValues2
 
     @validate_output
-    def simxGetObjectHandle(self, objectName, operationMode=simx_opmode_oneshot_wait):
+    def simxGetObjectHandle(self, objectName, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -685,8 +684,7 @@ class VRep:
         return c_AuxiliaryConsoleShow(self.clientID, consoleHandle, showState, operationMode)
 
     @validate_output
-    def simxGetObjectOrientation(self, objectHandle, relativeToObjectHandle, 
-                                 operationMode=simx_opmode_streaming):
+    def simxGetObjectOrientation(self, objectHandle, relativeToObjectHandle, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''
@@ -712,8 +710,7 @@ class VRep:
         return ret, arr
 
     @validate_output
-    def simxGetObjectPosition(self, objectHandle, relativeToObjectHandle, 
-                              operationMode=simx_opmode_streaming):
+    def simxGetObjectPosition(self, objectHandle, relativeToObjectHandle, operationMode):
         '''
         Please have a look at the function description/documentation in the V-REP user manual
         '''

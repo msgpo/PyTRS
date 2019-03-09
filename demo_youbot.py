@@ -90,7 +90,7 @@ if __name__ == '__main__':
     # Set the arm to its starting configuration. 
     vrep.simxPauseCommunication(True) 
     for arm_joint, starting_joint in zip(youbot.arm_joints, starting_joints):
-        vrep.simxSetJointTargetPosition(arm_joint, starting_joint)
+        vrep.simxSetJointTargetPosition(arm_joint, starting_joint, simx_opmode_oneshot)
     vrep.simxPauseCommunication(False) 
 
     # Initialise the plot. 

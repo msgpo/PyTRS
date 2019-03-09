@@ -15,9 +15,10 @@ class YouBot:
     # and the arm tip pose.
     
     def __init__(self, vrep: VRep):
+        get_handle = lambda name: vrep.simxGetObjectHandle(name, simx_opmode_oneshot_wait)
+        
         # Wheel handles (front left, rear left, rear right, front right).
-        self.wheel_joints = [vrep.simxGetObjectHandle('rollingJoint_' + s) for s in
-                             ['fl', 'rl', 'rr', 'fr']]
+        self.wheel_joints = [get_handle('rollingJoint_' + s) for s in ['fl', 'rl', 'rr', 'fr']]
         for wheel_joint in self.wheel_joints:
             vrep.simxSetJointTargetVelocity(wheel_joint, 0, simx_opmode_oneshot)
         
@@ -28,16 +29,16 @@ class YouBot:
         
         # Sensor handles. The Hokuyo sensor is implemented with two planar sensors that each 
         # cover 120 degrees, hence the two handles
-        self.hokuyo1 = vrep.simxGetObjectHandle('fastHokuyo_sensor1')
-        self.hokuyo2 = vrep.simxGetObjectHandle('fastHokuyo_sensor2')
+        self.hokuyo1 = get_handle('fastHokuyo_sensor1')
+        self.hokuyo2 = get_handle('fastHokuyo_sensor2')
         
-        self.xyz_sensor = vrep.simxGetObjectHandle('xyzSensor')
-        self.rgb_sensor = vrep.simxGetObjectHandle('rgbSensor')
-        self.rgbd_casing = vrep.simxGetObjectHandle('rgbdSensor')
+        self.xyz_sensor = get_handle('xyzSensor')
+        self.rgb_sensor = get_handle('rgbSensor')
+        self.rgbd_casing = get_handle('rgbdSensor')
         
         # Robot handles
-        self.ref = vrep.simxGetObjectHandle('youBot_center')
-        self.arm_ref = vrep.simxGetObjectHandle('youBot_ref')
+        self.ref = get_handle('youBot_center')
+        self.arm_ref = get_handle('youBot_ref')
         
         # Arm handles. 
         # The project page ( http://renaud-detry.net/teaching/info0948/private/project.php )
@@ -47,36 +48,37 @@ class YouBot:
         
         # The *position* of this object always corresponds to the position of the tip of
         # the arm (the tip is somewhere between the two fingers)
-        self.ptip = vrep.simxGetObjectHandle('youBot_gripperPositionTip')
+        self.ptip = get_handle('youBot_gripperPositionTip')
         
         # In IK mode (km_mode set to 1 or 2), the robot will try to move the *position*
         # of ptip to the *position* of ptarget.
-        self.ptarget = vrep.simxGetObjectHandle('youBot_gripperPositionTarget')
+        self.ptarget = get_handle('youBot_gripperPositionTarget')
         
         # The *orientation* of this object always corresponds to the orientation of the tip of
         # the arm (the tip is somewhere between the two fingers)
-        self.otip = vrep.simxGetObjectHandle('youBot_gripperOrientationTip')
+        self.otip = get_handle('youBot_gripperOrientationTip')
         
         # In IK mode 2 (km_mode set to 2), the robot will try to move the *orientation*
         # of otip to the *orientation* of otarget.
-        self.otarget = vrep.simxGetObjectHandle('youBot_gripperOrientationTarget')
+        self.otarget = get_handle('youBot_gripperOrientationTarget')
         
         # Tip orientations are easier to manipulate in the reference frame of Rectangle22,
         # because then the degree of freedom onto which the orientation controller acts
         # corresponds to one of the three Euler angles of the tip orientation.
-        self.r22 = vrep.simxGetObjectHandle('Rectangle22')
+        self.r22 = get_handle('Rectangle22')
         
-        self.arm_joints = [vrep.simxGetObjectHandle('youBotArmJoint%d' % i) for i in range(0, 5)]
-        self.map_looker = vrep.simxGetObjectHandle('map')
-        self.landmarks = vrep.simxGetObjectHandle('Landmarks')
+        self.arm_joints = [get_handle('youBotArmJoint%d' % i) for i in range(0, 5)]
+        self.map_looker = get_handle('map')
+        self.landmarks = get_handle('Landmarks')
 
     def streaming_init(self, vrep):
+        #
         ## Examples: getting information from the simulator (and testing the connection). Stream 
         # wheel angles, Hokuyo data, and robot pose (see usage below). Wheel angles are not used 
         # in this example, but they may be necessary in your project.
         for wheel_joint in self.wheel_joints:
-            vrep.simxGetJointPosition(wheel_joint)
-        vrep.simxGetObjectPosition(self.ref, -1)
+            vrep.simxGetJointPosition(wheel_joint, simx_opmode_streaming)
+        vrep.simxGetObjectPosition(self.ref, -1, simx_opmode_streaming)
         vrep.simxGetObjectOrientation(self.ref, -1, simx_opmode_streaming)
         vrep.simxReadVisionSensor(self.hokuyo1, simx_opmode_streaming)
         vrep.simxReadVisionSensor(self.hokuyo2, simx_opmode_streaming)
@@ -136,7 +138,6 @@ class YouBot:
 
     def hokuyo_read(self, vrep, opmode, trans=None):
         # Reads from Hokuyo sensor.
-       
         t1 = self.hokuyo1_trans
         t2 = self.hokuyo2_trans
         if trans is not None:
