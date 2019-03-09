@@ -28,10 +28,10 @@ PyTRS
 |   +-- ...
 +-- world           Environment files (doesn't contain code)
 |   +-- ...
-+-- youbot          Partial python port (unported matlab code remains)
++-- youbot          Python port (some unported matlab code remains)
 |   +-- ...
 +-- demo_youbot.py  Demonstration script that interacts with the bot
-+-- demo...         Other demonstration scripts
++-- demo_...        Other demonstration scripts
 +-- m2py.py         Script to convert matlab code to python
 ```
 
@@ -48,3 +48,6 @@ The following scripts also show some tricks about plotting data; they are not li
 
   * `demo_plot_matrix.py`: plots a matrix (such as a map)
   * `demo_plot_multiple.py`: deals with multiple windows
+  
+### Other resources
+I would recommend reading about [the operation modes](http://www.coppeliarobotics.com/helpFiles/en/remoteApiConstants.htm#operationModes) (the `simx_opmode_*` that are in many function calls).
