@@ -3,7 +3,6 @@ This is a port of [ULgRobotics/trs](https://github.com/ULgRobotics/trs) for pyth
 ### Usage
 
 To run the YouBot demonstration script:
-- Open house.ttt in vrep
 - Run simRemoteApi.start(19998) in the vrep LUA console
 - Run demo_youbot.py
 
@@ -50,4 +49,4 @@ The following scripts also show some tricks about plotting data; they are not li
   * `demo_plot_multiple.py`: deals with multiple windows
   
 ### Other resources
-I would recommend reading about [the operation modes](http://www.coppeliarobotics.com/helpFiles/en/remoteApiConstants.htm#operationModes) (the `simx_opmode_*` that are in many function calls).
+I would recommend reading about [the operation modes](http://www.coppeliarobotics.com/helpFiles/en/remoteApiConstants.htm#operationModes) (the `simx_opmode_*` that are in many function calls of the V-Rep API).
