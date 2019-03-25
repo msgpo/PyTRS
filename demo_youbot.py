@@ -282,7 +282,7 @@ if __name__ == '__main__':
             # simx_opmode_oneshot_wait. 
             print('Capturing image...')
             image = vrep.simxGetVisionSensorImage(youbot.rgb_sensor, 0, simx_opmode_oneshot_wait)
-            print("Captured %dx%dx%dx image." % image.shape)
+            print("Captured %dx%dx%d image." % image.shape)
 
             # Finally, show the image. 
             if plot_data:
