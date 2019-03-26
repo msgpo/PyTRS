@@ -141,8 +141,8 @@ class YouBot:
         t1 = self.hokuyo1_trans
         t2 = self.hokuyo2_trans
         if trans is not None:
-            t1 = trans * self.hokuyo1_trans
-            t2 = trans * self.hokuyo2_trans
+            t1 = np.dot(trans, self.hokuyo1_trans)
+            t2 = np.dot(trans, self.hokuyo2_trans)
     
         # The Hokuyo data comes in a funny format. Use the code below to move it
         # to a Matlab matrix

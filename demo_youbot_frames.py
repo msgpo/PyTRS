@@ -32,17 +32,14 @@ youbot_euler = vrep.simxGetObjectOrientation(youbot.ref, -1, simx_opmode_buffer)
 # Determine the position of the Hokuyo with global coordinates (world reference frame).
 trf = np.asarray(transl(youbot_pos) * trotx(youbot_euler[0]) * troty(youbot_euler[1]) *\
                  trotz(youbot_euler[2]))
-print(youbot.hokuyo1_pos)
-world_hokuyo1 = homtrans(trf, np.asarray(youbot.hokuyo1_pos).reshape((3, 1)))
-print(world_hokuyo1)
-world_hokuyo2 = homtrans(trf, np.asarray(youbot.hokuyo2_pos).reshape((3, 1)))
+world_hokuyo1 = homtrans(trf, np.asarray(youbot.hokuyo1_pos)[:, None])
+world_hokuyo2 = homtrans(trf, np.asarray(youbot.hokuyo2_pos)[:, None])
 
 # Use the sensor to detect the visible points, within the world frame.
 pts, contacts = youbot.hokuyo_read(vrep, simx_opmode_buffer, trf)
 
 # Plot this data: delimit the visible area and highlight contact points.
 ax = plt.subplot()  # type: plt.Axes
-ax.plot(pts[0, contacts], pts[1, contacts], '*r')
 ax.plot(pts[0, contacts], pts[1, contacts], '*r')
 ax.plot([world_hokuyo1[0], *pts[0, :], world_hokuyo2[0]],
         [world_hokuyo1[1], *pts[1, :], world_hokuyo2[1]], 'r')
